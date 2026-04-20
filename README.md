@@ -1,2 +1,2 @@
-# High-tech-minimal-studio
+# fxt-studio
 Testing an studio
