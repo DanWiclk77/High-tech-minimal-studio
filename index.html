@@ -20,15 +20,15 @@
         input,select,textarea{background:#252525;border:1px solid #333;color:#EAEAEA;padding:8px;border-radius:6px;width:100%;font-size:14px}
         label{font-size:11px;color:#999;display:block;margin-bottom:4px}.col{flex:1}
         #log{background:#000;padding:8px;border-radius:6px;font-size:9px;color:#0F0;height:160px;overflow:auto;margin-top:8px}
-  .chat{border:1px solid #333;border-radius:8px;padding:8px;margin:8px 0;max-height:150px;overflow:auto;background:#111}
-  .chat-msg{font-size:11px;margin:4px 0;padding:4px;border-radius:4px}
-  .chat-user{background:#252525;text-align:right;color:#8FF}
-  .chat-ai{background:#1A1A1A;color:#EAEAEA}
-  .chat-box{display:flex;gap:4px;margin-top:4px}
-  .chat-box input{flex:1;padding:6px;font-size:12px}
-  .chat-box button{width:auto;padding:6px 10px;margin:0;font-size:12px}
-  .toggle{font-size:11px;color:#00FF88;cursor:pointer;user-select:none}
-  .hidden{display:none}
+ .chat{border:1px solid #333;border-radius:8px;padding:8px;margin:8px 0;max-height:150px;overflow:auto;background:#111}
+ .chat-msg{font-size:11px;margin:4px 0;padding:4px;border-radius:4px}
+ .chat-user{background:#252525;text-align:right;color:#8FF}
+ .chat-ai{background:#1A1A1A;color:#EAEAEA}
+ .chat-box{display:flex;gap:4px;margin-top:4px}
+ .chat-box input{flex:1;padding:6px;font-size:12px}
+ .chat-box button{width:auto;padding:6px 10px;margin:0;font-size:12px}
+ .toggle{font-size:11px;color:#00FF88;cursor:pointer;user-select:none}
+ .hidden{display:none}
     </style>
 </head>
 <body>
@@ -80,6 +80,7 @@
                 <input id="mix-input" placeholder="Ej: Más sidechain, el kick debe dominar">
                 <button onclick="chatAgent('mixer')">Enviar</button>
             </div>
+        </div>
         <button id="mix-btn" onclick="runMixer()" disabled>Mezclar Stems</button>
         <div id="mix-files"></div>
     </div>
@@ -148,4 +149,4 @@ async function chatAgent(agentType){
     }
 }
 
-const DSP={async analyzeBuffer(b){try{let peak=0;for(let ch=0;ch<b.numberOfChannels;ch++){const d=b.getChannelData(ch);for(let i=0;i<d.length;i++)peak=Math.max(peak,Math.abs(d[i]))}const peakDb=20*Math.log10(peak||0.0001);let rms=0;const d=b.getChannelData(0);for(let i=0;i<d.length;i++)rms+=d[i]*d[i];rms=Math.sqrt(rms/d.length);return{peak:peakDb,lufs:parseFloat((20*Math.log10(rms||0.0001)-0.691).toFixed(1))}}catch(e){log('Error análisis: '+e);return{lufs:-23,peak:-6}}},async applyMixChain(bufs){log('Mix: renderizando');const l=Math.max.apply(Math,bufs.map(function(b){return b.length}));const ctx=new OfflineAudioContext(2,l,44100);const sum=ctx.createGain();sum.gain.value=.25;bufs.forEach(function(buf){const s=ctx.createBufferSource();s.buffer=buf;s.connect(sum);s.start()});const hpf=ctx.createBiquadFilter();hpf.type='highpass';hpf.frequency.value=20;const comp=ctx.createDynamicsCompressor();comp.threshold.value=-24;comp.ratio.value=2;comp.attack.value=.01;comp.release.value=.1;const tape=ctx.createWaveShaper();const s=44100,c=new Float32Array(s);for(let i=0;i<s;i++){const x=i*2/s-1;c[i]=Math.tanh(x*2)/Math.tanh(2)}tape.curve=c;const clip=ctx.createWaveShaper();const s2=44100,c2=new Float32Array(s2);const ceil=Math.pow(10,-1/20);for(let i=0;i<s2;i++){const x=i*2/s2-1;c2[i]=Math.max(-ceil,Math.min(ceil,x))}clip.curve=c2;sum.connect(hpf).connect(comp).connect(tape).connect(clip).connect(ctx.destination);return ctx.startRendering()},async master(buf,t){const ctx=new OfflineAudioContext(2,buf.length,44100);const src=ctx.createBufferSource();src.buffer=buf;const a=await this.analyzeBuffer(buf);const gainDb=t.lufs-a.lufs;const gain=ctx.createGain();gain.gain.value=Math.pow(10,gainDb/20);const lim=ctx.createDynamicsCompressor();lim.threshold.value=t.ceiling;lim.ratio.value=20;lim.attack.value=.003;lim.release.value=.05;src.connect(gain).connect(lim).connect(ctx.destination);src.start(0);return ctx.startRendering()},bufferToWav(buf){const len=buf.length*buf.numberOfChannels*2+44;const ab=new ArrayBuffer(len);const v=new DataView(ab);const w=function(o,s){for(let i=0;i<s.length;i++)v.setUint8(o+i,s.charCodeAt(i))};w(0,'RIFF');v.setUint32(4,len-8,true);w(8,'WAVE');w(12,'fmt ');v.setUint32(16,16
+const DSP={async analyzeBuffer(b){try{let peak=0;for(let ch=0;ch<b.numberOfChannels;ch++){const d=b.getChannelData(ch);for(let i=0;i<d.length;i++)peak=Math.max(peak,Math.abs(d[i]))}const peakDb=20*Math.log10(peak||0.0001);let rms=0;const d=b.getChannelData(0);for(let i=0;i<d.length;i++)rms+=d[i]*d[i];rms=Math.sqrt(rms/d.length);return{peak:peakDb,lufs:parseFloat((20*Math.log10(rms||0.0001)-0.691).toFixed(1))}}catch(e){log('Error análisis: '+e);return{lufs:-23,peak:-6}}},async applyMixChain(bufs){log('Mix: renderizando');const l=Math.max.apply(Math,bufs.map(function(b){return b.length}));const ctx=new OfflineAudioContext(2,l,44100);const sum=ctx.createGain();sum.gain.value=.25;bufs.forEach(function(buf){const s=ctx.createBufferSource();s.buffer=buf;s.connect(sum);s.start()});const hpf=ctx.createBiquadFilter();hpf.type='highpass';hpf.frequency.value=20;const comp=ctx.createDynamicsCompressor();comp.threshold.value=-24;comp.ratio.value=2;comp.attack.value=.01;comp.release.value=.1;const tape=ctx.createWaveShaper();const s=44100,c=new Float32Array(s);for(let i=0;i<s;i++){const x=i*2/s-1;c[i]=Math.tanh(x*2)/Math.tanh(2)}tape.curve=c;const clip=ctx.createWaveShaper();const s2=44100,c2=new Float32Array(s2);const ceil=Math.pow(10,-1/20);for(let i=0;i<s2;i++){const x=i*2/s2-1;c2[i]=Math.max(-ceil,Math.min(ceil,x))}clip.curve=c2;sum.connect(hpf).connect(comp).connect(tape).connect(clip).connect(ctx.destination);return ctx.startRendering()},async master(buf,t){const ctx=new OfflineAudioContext(2,buf.length,44100);const src=ctx.createBufferSource();src.buffer=buf;const a=await this.analyzeBuffer(buf);const gainDb=t.lufs-a.lufs;const gain=ctx.createGain();gain.gain.value=Math.pow(10,gainDb/20);const lim=ctx.createDynamicsCompressor();lim.threshold.value=t.ceiling;lim.ratio.value=20;lim.attack.value=.003;lim.release.value=.05;src.connect(gain).connect(lim).connect(ctx.destination);src.start(0);return ctx.startRendering()},bufferToWav(buf){const len=buf.length*buf.numberOfChannels*2+44;const ab=new ArrayBuffer(len);const v=new DataView(ab);const w=function(o,s){for(let i=0;i<s.length;i++)v.setUint8(o+i,s.charCodeAt(i))};w(0,'RIFF');v.setUint32(4,len-8,true);w(8,'WAVE');w(12,'fmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16
