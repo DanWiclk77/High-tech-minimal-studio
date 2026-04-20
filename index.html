@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#0A0A0A"/>
-    <title>FXT Studio AI v4.0</title>
+    <title>FXT Studio AI v4.1</title>
     <link rel="manifest" href='data:application/json,{"name":"FXT Studio AI","short_name":"FXT","start_url":".","display":"standalone","background_color":"#0A0A0A","theme_color":"#0A0A0A","icons":[{"src":"https://via.placeholder.com/512/0A0A0A/EAEAEA?text=FXT","sizes":"512x512"}]}'>
     <script src="https://unpkg.com/tone@14.7.77/build/Tone.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@magenta/music@1.23.1/es6/core.js"></script>
@@ -29,10 +29,11 @@
 .chat-box button{width:auto;padding:6px 10px;margin:0;font-size:12px}
 .toggle{font-size:11px;color:#00FF88;cursor:pointer;user-select:none}
 .hidden{display:none}
+.badge{background:#00FF88;color:#000;font-size:9px;padding:2px 6px;border-radius:4px;font-weight:700}
     </style>
 </head>
 <body>
-    <h1>FXT Studio AI v4.0</h1>
+    <h1>FXT Studio AI v4.1 <span class="badge">CHAT IA ACTIVO</span></h1>
     <div class="agent">
         <label>OpenAI API Key - requerida para que los agentes generen</label>
         <input id="apikey" type="password" placeholder="sk-proj-..." onchange="localStorage.setItem('OPENAI_KEY', this.value)">
@@ -59,25 +60,26 @@
 
     <div class="agent">
         <h2>1. Producer FXT <span class="status" id="prod-status"></span></h2>
-        <div class="toggle" onclick="toggleChat('prod')">[+] Chat con Producer</div>
-        <div id="prod-chat" class="hidden">
-            <div class="chat" id="prod-chatbox"></div>
+        <div id="prod-chat">
+            <div class="chat" id="prod-chatbox">
+                <div class="chat-msg chat-ai">Soy Producer FXT. Dime qué bassline quieres y lo genero. Ej: "F minor, hipnótico, slide en step 3 y 11, acento en 15"</div>
+            </div>
             <div class="chat-box">
-                <input id="prod-input" placeholder="Ej: Bassline hipnótico en F minor, slide en step 3 y 11, acento en 15">
+                <input id="prod-input" placeholder="Describe el bassline que quieres">
                 <button onclick="chatAgent('producer')">Enviar</button>
             </div>
-        </div>
         <button onclick="runProducer()">Generar Bassline + Stems</button>
         <div id="prod-files"></div>
     </div>
 
     <div class="agent">
         <h2>2. Mix Engineer <span class="status" id="mix-status"></span></h2>
-        <div class="toggle" onclick="toggleChat('mix')">[+] Chat con Mix Engineer</div>
-        <div id="mix-chat" class="hidden">
-            <div class="chat" id="mix-chatbox"></div>
+        <div id="mix-chat">
+            <div class="chat" id="mix-chatbox">
+                <div class="chat-msg chat-ai">Soy Mix Engineer. Dime el balance que buscas. Ej: "kick -6dB, sidechain 80%, comp ratio 3:1"</div>
+            </div>
             <div class="chat-box">
-                <input id="mix-input" placeholder="Ej: Más sidechain, kick a -8dB">
+                <input id="mix-input" placeholder="Describe la mezcla">
                 <button onclick="chatAgent('mixer')">Enviar</button>
             </div>
         </div>
@@ -87,11 +89,12 @@
 
     <div class="agent">
         <h2>3. Mastering Engineer <span class="status" id="mast-status"></span></h2>
-        <div class="toggle" onclick="toggleChat('mast')">[+] Chat con Mastering</div>
-        <div id="mast-chat" class="hidden">
-            <div class="chat" id="mast-chatbox"></div>
+        <div id="mast-chat">
+            <div class="chat" id="mast-chatbox">
+                <div class="chat-msg chat-ai">Soy Mastering. Dime los targets. Ej: "CLUB a -5.5 LUFS, Beatport a -8.5 LUFS"</div>
+            </div>
             <div class="chat-box">
-                <input id="mast-input" placeholder="Ej: Master de club a -5.5 LUFS">
+                <input id="mast-input" placeholder="Describe el master">
                 <button onclick="chatAgent('mastering')">Enviar</button>
             </div>
         </div>
@@ -103,7 +106,7 @@
 <script>
 function log(msg){const l=document.getElementById('log');l.innerHTML+='<br>'+new Date().toLocaleTimeString()+': '+msg;l.scrollTop=l.scrollHeight}
 window.onerror=function(m,s,ln){log('ERROR JS línea '+ln+': '+m);updateStatus('prod-status','❌ Error JS');return true};
-log('1. Script iniciado OK');
+log('1. Script v4.1 iniciado');
 
 document.getElementById('apikey').value=localStorage.getItem('OPENAI_KEY')||'';
 log('2. DOM listo');
@@ -114,19 +117,18 @@ const Scales={
     'C major':['C','D','E','F','G','A','B'],'C minor':['C','D','Eb','F','G','Ab','Bb'],
     'C# major':['C#','D#','F','F#','G#','A#','C'],'C# minor':['C#','D#','E','F#','G#','A','B'],
     'D major':['D','E','F#','G','A','B','C#'],'D minor':['D','E','F','G','A','Bb','C'],
-    'D# major':['D#','F','G','G#','A#','C','D'],'D# minor':['D#','F','F#','G#','A#','B','C#'],
+    'D# major':['D#','F','G','G#','A#','C','D'],'D# minor':['D#','F#','G#','A#','B','C#'],
     'E major':['E','F#','G#','A','B','C#','D#'],'E minor':['E','F#','G','A','B','C','D'],
     'F major':['F','G','A','Bb','C','D','E'],'F minor':['F','G','Ab','Bb','C','Db','Eb'],
     'F# major':['F#','G#','A#','B','C#','D#','F'],'F# minor':['F#','G#','A','B','C#','D','E'],
     'G major':['G','A','B','C','D','E','F#'],'G minor':['G','A','Bb','C','D','Eb','F'],
     'G# major':['G#','A#','C','C#','D#','F','G'],'G# minor':['G#','A#','B','C#','D#','E','F#'],
     'A major':['A','B','C#','D','E','F#','G#'],'A minor':['A','B','C','D','E','F','G'],
-    'A# major':['A#','C','D','D#','F','G','A'],'A# minor':['A#','C','C#','D#','F','F#','G#'],
+    'A# major':['A#','C','D#','F','G','A'],'A# minor':['A#','C','C#','D#','F','F#','G#'],
     'B major':['B','C#','D#','E','F#','G#','A#'],'B minor':['B','C#','D','E','F#','G','A']
 };
-log('3. Storage y escalas OK');
+log('3. Storage y 24 escalas OK');
 
-function toggleChat(agent){const el=document.getElementById(agent+'-chat');el.classList.toggle('hidden');log('Chat '+agent+' toggle')}
 function addChatMsg(agent,role,text){const box=document.getElementById(agent+'-chatbox');const div=document.createElement('div');div.className='chat-msg chat-'+role;div.textContent=text;box.appendChild(div);box.scrollTop=box.scrollHeight;ChatHistory[agent].push({role:role,content:text})}
 
 async function askAI(systemPrompt,userPrompt){
@@ -135,11 +137,11 @@ async function askAI(systemPrompt,userPrompt){
     const res=await fetch('https://api.openai.com/v1/chat/completions',{
         method:'POST',
         headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
-        body:JSON.stringify({model:'gpt-4o-mini',messages:[{role:'system',content:systemPrompt},{role:'user',content:userPrompt}],temperature:0.7,max_tokens:400})
+        body:JSON.stringify({model:'gpt-4o-mini',messages:[{role:'system',content:systemPrompt},{role:'user',content:userPrompt}],temperature:0.7,max_tokens:500,response_format:{type:'json_object'}})
     });
     const data=await res.json();
     if(data.error)throw new Error(data.error.message);
-    return data.choices[0].message.content;
+    return JSON.parse(data.choices[0].message.content);
 }
 
 async function chatAgent(agentType){
@@ -151,4 +153,18 @@ async function chatAgent(agentType){
         addChatMsg(short,'user',userMsg);
         input.value='';
         const systemPrompts={
-            producer:'Eres Producer FXT experto en Melodic Techno. Cuando el usuario describa un bassline, responde SOLO con un JSON válido: {"notes":[{"step":0-15,"note":"F1","slide":true,"accent":false}]}. Usa steps 0-15. Notas en formato C1, F#0, etc. Si no especifican tonalidad usa la
+            producer:'Eres Producer FXT experto en Melodic Techno. El usuario describe un bassline. Responde SOLO un JSON válido: {"notes":[{"step":0-15,"note":"F1","slide":true,"accent":false}]}. Usa steps 0-15. Notas en formato C1, F#0. Respeta la tonalidad que te pasen. No agregues texto fuera del JSON.',
+            mixer:'Eres Mix Engineer FXT. Responde SOLO JSON: {"sidechain":0.8,"kick_gain":-6,"comp_ratio":2,"comp_thresh":-24}.',
+            mastering:'Eres Mastering Engineer FXT. Responde SOLO JSON: {"targets":{"CLUB":{"lufs":-5.5,"ceiling":-0.3},"BEATPORT":{"lufs":-8.5,"ceiling":-1.0}}}.'
+        };
+        const key=document.getElementById('key').value;
+        const bpm=document.getElementById('bpm').value;
+        const fullPrompt='Tonalidad: '+key+', BPM: '+bpm+'. Instrucción: '+userMsg;
+        addChatMsg(short,'ai','Generando con IA...');
+        const reply=await askAI(systemPrompts[agentType],fullPrompt);
+        document.getElementById(short+'-chatbox').lastChild.remove();
+        addChatMsg(short,'ai','Listo. JSON guardado. Toca el botón de Generar.');
+        project[agentType+'Objective']=reply;
+        Storage.save(project);
+        log('Objetivo '+agentType+' guardado');
+    }catch
