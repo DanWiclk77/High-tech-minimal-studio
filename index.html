@@ -4,35 +4,35 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#0A0A0A"/>
-    <title>FXT Studio AI v3.0</title>
+    <title>FXT Studio AI v3.1</title>
     <link rel="manifest" href='data:application/json,{"name":"FXT Studio AI","short_name":"FXT","start_url":".","display":"standalone","background_color":"#0A0A0A","theme_color":"#0A0A0A","icons":[{"src":"https://via.placeholder.com/512/0A0A0A/EAEAEA?text=FXT","sizes":"512x512"}]}'>
     <script src="https://unpkg.com/tone@14.7.77/build/Tone.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@magenta/music@1.23.1/es6/core.js"></script>
     <style>
         *{box-sizing:border-box}body{font-family:system-ui;background:#0A0A0A;color:#EAEAEA;margin:0;padding:12px}
         h1{font-size:18px;margin:0 0 12px 0}.row{display:flex;gap:8px;margin-bottom:12px}
-     .agent{background:#1A1A1A;border:1px solid #333;border-radius:12px;padding:12px;margin-bottom:12px}
-     .agent h2{margin:0 0 8px 0;font-size:15px;display:flex;justify-content:space-between;align-items:center}
+   .agent{background:#1A1A1A;border:1px solid #333;border-radius:12px;padding:12px;margin-bottom:12px}
+   .agent h2{margin:0 0 8px 0;font-size:15px;display:flex;justify-content:space-between;align-items:center}
         button{background:#EAEAEA;color:#0A0A0A;border:none;padding:10px 14px;border-radius:8px;font-weight:600;width:100%;margin-top:8px;cursor:pointer;font-size:14px}
         button:disabled{background:#333;color:#666;cursor:not-allowed}
-     .file{background:#252525;padding:6px 8px;border-radius:6px;margin:4px 0;font-size:11px;display:flex;justify-content:space-between;align-items:center}
-     .status{color:#00FF88;font-size:11px}.error{color:#FF4444;font-size:11px}
+   .file{background:#252525;padding:6px 8px;border-radius:6px;margin:4px 0;font-size:11px;display:flex;justify-content:space-between;align-items:center}
+   .status{color:#00FF88;font-size:11px}.error{color:#FF4444;font-size:11px}
         input,select,textarea{background:#252525;border:1px solid #333;color:#EAEAEA;padding:8px;border-radius:6px;width:100%;font-size:14px}
         label{font-size:11px;color:#999;display:block;margin-bottom:4px}.col{flex:1}
-        #log{background:#000;padding:6px;border-radius:6px;font-size:9px;color:#0F0;height:80px;overflow:auto;margin-top:8px}
-       .chat{border:1px solid #333;border-radius:8px;padding:8px;margin:8px 0;max-height:150px;overflow:auto;background:#111}
-       .chat-msg{font-size:11px;margin:4px 0;padding:4px;border-radius:4px}
-       .chat-user{background:#252525;text-align:right;color:#8FF}
-       .chat-ai{background:#1A1A1A;color:#EAEAEA}
-       .chat-box{display:flex;gap:4px;margin-top:4px}
-       .chat-box input{flex:1;padding:6px;font-size:12px}
-       .chat-box button{width:auto;padding:6px 10px;margin:0;font-size:12px}
-       .toggle{font-size:11px;color:#00FF88;cursor:pointer;user-select:none}
-       .hidden{display:none}
+        #log{background:#000;padding:8px;border-radius:6px;font-size:9px;color:#0F0;height:160px;overflow:auto;margin-top:8px}
+     .chat{border:1px solid #333;border-radius:8px;padding:8px;margin:8px 0;max-height:150px;overflow:auto;background:#111}
+     .chat-msg{font-size:11px;margin:4px 0;padding:4px;border-radius:4px}
+     .chat-user{background:#252525;text-align:right;color:#8FF}
+     .chat-ai{background:#1A1A1A;color:#EAEAEA}
+     .chat-box{display:flex;gap:4px;margin-top:4px}
+     .chat-box input{flex:1;padding:6px;font-size:12px}
+     .chat-box button{width:auto;padding:6px 10px;margin:0;font-size:12px}
+     .toggle{font-size:11px;color:#00FF88;cursor:pointer;user-select:none}
+     .hidden{display:none}
     </style>
 </head>
 <body>
-    <h1>FXT Studio AI v3.0</h1>
+    <h1>FXT Studio AI v3.1</h1>
     <div class="agent">
         <label>OpenAI API Key - requerida para chat IA</label>
         <input id="apikey" type="password" placeholder="sk-proj-..." onchange="localStorage.setItem('OPENAI_KEY', this.value)">
@@ -102,41 +102,28 @@
     <div id="log">Log:</div>
 <script>
 function log(msg){const l=document.getElementById('log');l.innerHTML+='<br>'+new Date().toLocaleTimeString()+': '+msg;l.scrollTop=l.scrollHeight}
-window.onerror=function(m,s,ln){log('ERROR JS línea '+ln+': '+m);return true};
-log('Sistema v3.0 iniciado');
+window.onerror=function(m,s,ln){log('ERROR JS línea '+ln+': '+m);updateStatus('prod-status','❌ Error');return true};
+log('1. Script iniciado');
 
 document.getElementById('apikey').value=localStorage.getItem('OPENAI_KEY')||'';
+log('2. DOM listo');
 
 const Storage={save:function(p){localStorage.setItem('fxt',JSON.stringify(p))},load:function(){const d=localStorage.getItem('fxt');return d?JSON.parse(d):null}};
 const ChatHistory={producer:[],mixer:[],mastering:[]};
+log('3. Storage OK');
 
-function toggleChat(agent){const el=document.getElementById(agent+'-chat');el.classList.toggle('hidden')}
+function toggleChat(agent){const el=document.getElementById(agent+'-chat');el.classList.toggle('hidden');log('Chat '+agent+' toggle')}
 function addChatMsg(agent,role,text){const box=document.getElementById(agent+'-chatbox');const div=document.createElement('div');div.className='chat-msg chat-'+role;div.textContent=text;box.appendChild(div);box.scrollTop=box.scrollHeight;ChatHistory[agent].push({role:role,content:text})}
 
 async function chatAgent(agentType){
     const key=localStorage.getItem('OPENAI_KEY');
-    if(!key){alert('Pon tu OpenAI API Key arriba para chatear con los agentes');return}
-    const input=document.getElementById(agentType.substring(0,4)+'-input');
+    if(!key){alert('Pon tu OpenAI API Key arriba para chatear');return}
+    const short=agentType.substring(0,4);
+    const input=document.getElementById(short+'-input');
     const userMsg=input.value.trim();
     if(!userMsg)return;
-    addChatMsg(agentType.substring(0,4),'user',userMsg);
+    addChatMsg(short,'user',userMsg);
     input.value='';
-
     const systemPrompts={
-        producer:'Eres Producer FXT, experto en Melodic Techno estilo Boris Brejcha. Tu trabajo es crear basslines con call-response, slides, acentos. Respondes corto y técnico. Cuando el usuario pida cambios, confirmas qué vas a cambiar en el patrón. No generes código, solo describe el cambio musical.',
-        mixer:'Eres Mix Engineer FXT. Especialista en cadena: HPF 20Hz, Compresión bus, Tape sat, Clipper. Respondes sobre balance, headroom, LUFS, sidechain. Confirmas ajustes técnicos que aplicarás.',
-        mastering:'Eres Mastering Engineer FXT. Dominas targets LUFS para Spotify -14, Beatport -9, Club -6. Respondes sobre loudness, ceiling, true peak. Confirmas el target que usarás.'
-    };
-
-    const messages=[{role:'system',content:systemPrompts[agentType]}].concat(ChatHistory[agentType.substring(0,4)].map(function(m){return{role:m.role==='user'?'user':'assistant',content:m.content}}));
-
-    try{
-        addChatMsg(agentType.substring(0,4),'ai','Pensando...');
-        const res=await fetch('https://api.openai.com/v1/chat/completions',{
-            method:'POST',
-            headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
-            body:JSON.stringify({model:'gpt-4o-mini',messages:messages,temperature:0.7,max_tokens:150})
-        });
-        const data=await res.json();
-        const reply=data.choices[0].message.content;
-        document.getElementById(agentType.substring
+        producer:'Eres Producer FXT, experto en Melodic Techno estilo Boris Brejcha. Tu trabajo es crear basslines con call-response, slides, acentos. Respondes corto y técnico. Cuando el usuario pida cambios, confirmas qué vas a cambiar en el patrón.',
+        mixer:'Eres Mix Engineer FXT. Especialista en cadena: HPF 20Hz, Compresión bus, Tape sat, Clipper. Respondes sobre balance, headroom, LUFS, sidechain. Confirmas ajustes técnicos.',
