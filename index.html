@@ -2,8 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>TB-303 Web Emulator v4 - Pro</title>
+<title>TB-303 Web Emulator v3 - Random Gen</title>
 <style>
   body {
     background: #1a1a1a;
@@ -63,12 +62,12 @@
 
 .switch-row {
     display: flex;
-    gap: 12px;
+    gap: 15px;
     align-items: center;
     background: #222;
     padding: 12px 15px;
     border-radius: 4px;
-    margin-bottom: 12px;
+    margin-bottom: 15px;
     flex-wrap: wrap;
   }
 .switch {
@@ -82,12 +81,12 @@
     background: #444;
     border: 1px solid #111;
     color: #eee;
-    padding: 8px 14px;
+    padding: 8px 16px;
     border-radius: 3px;
     cursor: pointer;
     font-weight: 600;
     text-transform: uppercase;
-    font-size: 11px;
+    font-size: 12px;
   }
   button:hover { background: #555; }
   button.active { background: #ff4500; color: #111; }
@@ -95,15 +94,10 @@
     background: #111;
     color: #ff4500;
     border: 1px solid #444;
-    padding: 6px 8px;
+    padding: 6px 10px;
     border-radius: 3px;
     font-size: 11px;
     font-weight: 600;
-  }
-
-.pattern-btns button {
-    padding: 8px 20px;
-    font-size: 14px;
   }
 
 .sequencer {
@@ -235,38 +229,17 @@
     </div>
     <div class="switch">
       <label>Tempo:</label>
-      <input type="range" id="tempo" min="60" max="200" value="128" step="1" style="width:90px">
+      <input type="range" id="tempo" min="60" max="200" value="128" step="1" style="width:100px">
       <span id="tempoVal" style="width:30px;display:inline-block">128</span>
     </div>
     <div class="switch">
       <label>Dist:</label>
-      <input type="range" id="dist" min="0" max="100" value="0" step="1" style="width:70px">
+      <input type="range" id="dist" min="0" max="100" value="0" step="1" style="width:80px">
       <span id="distVal" style="width:25px;display:inline-block">0</span>
-    </div>
-    <div class="pattern-btns">
-      <button id="patA" class="active">A</button>
-      <button id="patB">B</button>
     </div>
   </div>
 
   <div class="switch-row">
-    <div class="switch">
-      <label>Root:</label>
-      <select id="rootSelect">
-        <option value="0">C</option>
-        <option value="1">C#</option>
-        <option value="2">D</option>
-        <option value="3">D#</option>
-        <option value="4">E</option>
-        <option value="5">F</option>
-        <option value="6">F#</option>
-        <option value="7">G</option>
-        <option value="8">G#</option>
-        <option value="9">A</option>
-        <option value="10">A#</option>
-        <option value="11">B</option>
-      </select>
-    </div>
     <div class="switch">
       <label>Scale:</label>
       <select id="scaleSelect">
@@ -288,25 +261,15 @@
         <option value="techhouse">Tech House</option>
         <option value="minimal">Minimal Techno</option>
         <option value="hightech">High Tech Minimal</option>
-        <option value="hightech2">High Tech Min 2</option>
         <option value="trance">Trance</option>
-        <option value="dnb">Drum & Bass</option>
       </select>
     </div>
     <div class="switch">
       <label>Density:</label>
-      <input type="range" id="density" min="20" max="100" value="60" step="5" style="width:70px">
+      <input type="range" id="density" min="20" max="100" value="60" step="5" style="width:80px">
       <span id="densityVal" style="width:35px;display:inline-block">60%</span>
     </div>
     <button id="randomBtn" style="background:#ff4500;color:#111">RANDOM</button>
-  </div>
-
-  <div class="switch-row">
-    <div class="switch">
-      <label>Export:</label>
-      <button id="exportWav">WAV</button>
-      <button id="exportMidi">MIDI</button>
-    </div>
   </div>
 
   <div class="sequencer">
@@ -317,222 +280,401 @@
     <div class="led-row" id="leds"></div>
     <div class="steps" id="steps"></div>
     <div style="font-size:10px;color:#888;margin-top:8px;text-align:center">
-      Pattern <span id="currentPat">A</span> | NOTA | O- O+ | S A
+      NOTA | O- O+ | S A - Random genera patrones por género y escala
     </div>
   </div>
 </div>
+
 <script>
-const ctx=new (window.AudioContext||window.webkitAudioContext)();
-let isRunning=false,currentStep=0,nextNoteTime=0,waveform='sawtooth',scheduleTimer,currentPattern='A';
-const p={tune:0,cutoff:1000,resonance:10,envmod:2000,decay:0.3,accent:0.5,tempo:128,dist:0,density:60,root:0};
-const scales={major:[0,2,4,5,7,9,11],minor:[0,2,3,5,7,8,10],harmonic:[0,2,3,5,7,8,11],melodic:[0,2,3,5,7,9,11],pentatonic_maj:[0,2,4,7,9],pentatonic_min:[0,3,5,7,10],blues:[0,3,5,6,7,10],chromatic:[0,1,2,3,4,5,6,7,8,9,10,11]};
-const allNotes=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
-const baseNotes=['C2','C#2','D2','D#2','E2','F2','F#2','G2','G#2','A2','A#2','B2'];
-const noteFreq={'C1':32.70,'C#1':34.65,'D1':36.71,'D#1':38.89,'E1':41.20,'F1':43.65,'F#1':46.25,'G1':49.00,'G#1':51.91,'A1':55.00,'A#1':58.27,'B1':61.74,'C2':65.41,'C#2':69.30,'D2':73.42,'D#2':77.78,'E2':82.41,'F2':87.31,'F#2':92.50,'G2':98.00,'G#2':103.8,'A2':110.0,'A#2':116.5,'B2':123.5,'C3':130.8,'C#3':138.6,'D3':146.8,'D#3':155.6,'E3':164.8,'F3':174.6,'F#3':185.0,'G3':196.0,'G#3':207.7,'A3':220.0,'A#3':233.1,'B3':246.9};
-const midiMap={'C1':36,'C#1':37,'D1':38,'D#1':39,'E1':40,'F1':41,'F#1':42,'G1':43,'G#1':44,'A1':45,'A#1':46,'B1':47,'C2':48,'C#2':49,'D2':50,'D#2':51,'E2':52,'F2':53,'F#2':54,'G2':55,'G#2':56,'A2':57,'A#2':58,'B2':59,'C3':60,'C#3':61,'D3':62,'D#3':63,'E3':64,'F3':65,'F#3':66,'G3':67,'G#3':68,'A3':69,'A#3':70,'B3':71};
-const patterns={A:Array(16).fill().map(()=>({note:'OFF',octave:2,slide:false,accent:false})),B:Array(16).fill().map(()=>({note:'OFF',octave:2,slide:false,accent:false}))};
-let seq=patterns.A;
+const ctx = new (window.AudioContext || window.webkitAudioContext)();
+let isRunning = false;
+let currentStep = 0;
+let nextNoteTime = 0;
+let waveform = 'sawtooth';
+let scheduleTimer;
 
-// Build UI
-const stepsDiv=document.getElementById('steps'),ledsDiv=document.getElementById('leds');
+const params = {
+  tune: 0, cutoff: 1000, resonance: 10, envmod: 2000,
+  decay: 0.3, accent: 0.5, tempo: 128, dist: 0, density: 60
+};
+
+// Escalas - intervalos en semitonos desde la raíz
+const scales = {
+  major: [0,2,4,5,7,9,11],
+  minor: [0,2,3,5,7,8,10],
+  harmonic: [0,2,3,5,7,8,11],
+  melodic: [0,2,3,5,7,9,11],
+  pentatonic_maj: [0,2,4,7,9],
+  pentatonic_min: [0,3,5,7,10],
+  blues: [0,3,5,6,7,10],
+  chromatic: [0,1,2,3,4,5,6,7,8,9,10,11]
+};
+
+const baseNotes = ['C2','C#2','D2','D#2','E2','F2','F#2','G2','G#2','A2','A#2','B2'];
+const noteFreq = {
+  'C1':32.70,'C#1':34.65,'D1':36.71,'D#1':38.89,'E1':41.20,'F1':43.65,'F#1':46.25,'G1':49.00,'G#1':51.91,'A1':55.00,'A#1':58.27,'B1':61.74,
+  'C2':65.41,'C#2':69.30,'D2':73.42,'D#2':77.78,'E2':82.41,'F2':87.31,'F#2':92.50,'G2':98.00,'G#2':103.8,'A2':110.0,'A#2':116.5,'B2':123.5,
+  'C3':130.8,'C#3':138.6,'D3':146.8,'D#3':155.6,'E3':164.8,'F3':174.6,'F#3':185.0,'G3':196.0,'G#3':207.7,'A3':220.0,'A#3':233.1,'B3':246.9
+};
+
+const seq = Array(16).fill().map(() => ({note: 'OFF', octave: 2, slide: false, accent: false}));
+
+// UI Setup
+const stepsDiv = document.getElementById('steps');
+const ledsDiv = document.getElementById('leds');
 for(let i=0;i<16;i++){
-stepsDiv.innerHTML+=`<div class="step"><select data-step="${i}"><option value="OFF">OFF</option>${baseNotes.map(n=>`<option value="${n}">${n}</option>`).join('')}</select><div class="step-controls"><button class="step-btn oct-down" data-step="${i}">O-</button><span class="oct-indicator" id="oct-${i}">2</span><button class="step-btn oct-up" data-step="${i}">O+</button></div><div class="step-controls"><button class="step-btn slide-btn" data-step="${i}">S</button><button class="step-btn accent-btn" data-step="${i}">A</button></div></div>`;
-ledsDiv.innerHTML+=`<div class="led"></div>`;
+  const step = document.createElement('div');
+  step.className = 'step';
+  step.innerHTML = `
+    <select data-step="${i}">
+      <option value="OFF">OFF</option>
+      ${baseNotes.map(n => `<option value="${n}">${n}</option>`).join('')}
+    </select>
+    <div class="step-controls">
+      <button class="step-btn oct-down" data-step="${i}">O-</button>
+      <span class="oct-indicator" id="oct-${i}">2</span>
+      <button class="step-btn oct-up" data-step="${i}">O+</button>
+    </div>
+    <div class="step-controls">
+      <button class="step-btn slide-btn" data-step="${i}">S</button>
+      <button class="step-btn accent-btn" data-step="${i}">A</button>
+    </div>
+  `;
+  stepsDiv.appendChild(step);
+
+  const led = document.createElement('div');
+  led.className = 'led';
+  ledsDiv.appendChild(led);
 }
 
-// Knob listeners
-document.querySelectorAll('input[type=range]').forEach(input=>{
-input.oninput=e=>{
-const id=e.target.id;p[id]=parseFloat(e.target.value);
-const val=p[id];
-document.getElementById(id+'Val').textContent=id==='density'?val+'%':id==='decay'||id==='accent'||id==='resonance'?val.toFixed(2):val;
-}});
-document.getElementById('rootSelect').onchange=e=>p.root=parseInt(e.target.value);
+// Event listeners
+document.querySelectorAll('input[type=range]').forEach(input => {
+  input.addEventListener('input', e => {
+    const id = e.target.id;
+    params[id] = parseFloat(e.target.value);
+    const val = params[id];
+    document.getElementById(id+'Val').textContent =
+      id === 'density'? val + '%' :
+      id === 'decay' || id === 'accent' || id === 'resonance'? val.toFixed(2) : val;
+  });
+});
 
-// Waveform
-document.getElementById('sawBtn').onclick=()=>{waveform='sawtooth';document.getElementById('sawBtn').classList.add('active');document.getElementById('squareBtn').classList.remove('active')};
-document.getElementById('squareBtn').onclick=()=>{waveform='square';document.getElementById('sawBtn').classList.remove('active');document.getElementById('squareBtn').classList.add('active')};
-
-// Pattern A/B
-document.getElementById('patA').onclick=()=>{savePat();currentPattern='A';seq=patterns.A;updateUI();document.getElementById('patA').classList.add('active');document.getElementById('patB').classList.remove('active');document.getElementById('currentPat').textContent='A'};
-document.getElementById('patB').onclick=()=>{savePat();currentPattern='B';seq=patterns.B;updateUI();document.getElementById('patB').classList.add('active');document.getElementById('patA').classList.remove('active');document.getElementById('currentPat').textContent='B'};
-function savePat(){patterns[currentPattern]=JSON.parse(JSON.stringify(seq))}
-
-// Step controls
-document.querySelectorAll('select[data-step]').forEach(sel=>sel.onchange=e=>seq[e.target.dataset.step].note=e.target.value);
-document.querySelectorAll('.oct-down').forEach(btn=>btn.onclick=e=>{const i=e.target.dataset.step;if(seq[i].octave>1){seq[i].octave--;document.getElementById(`oct-${i}`).textContent=seq[i].octave}});
-document.querySelectorAll('.oct-up').forEach(btn=>btn.onclick=e=>{const i=e.target.dataset.step;if(seq[i].octave<3){seq[i].octave++;document.getElementById(`oct-${i}`).textContent=seq[i].octave}});
-document.querySelectorAll('.slide-btn').forEach(btn=>btn.onclick=e=>{const i=e.target.dataset.step;seq[i].slide=!seq[i].slide;e.target.classList.toggle('active',seq[i].slide)});
-document.querySelectorAll('.accent-btn').forEach(btn=>btn.onclick=e=>{const i=e.target.dataset.step;seq[i].accent=!seq[i].accent;e.target.classList.toggle('active',seq[i].accent)});
-
-// Run/Clear
-document.getElementById('clearBtn').onclick=()=>{seq.forEach(s=>{s.note='OFF';s.octave=2;s.slide=false;s.accent=false});updateUI()};
-document.getElementById('runBtn').onclick=async()=>{
-if(ctx.state==='suspended')await ctx.resume();
-isRunning=!isRunning;
-document.getElementById('runBtn').classList.toggle('active');
-document.getElementById('runBtn').textContent=isRunning?'STOP':'RUN';
-if(isRunning){currentStep=0;nextNoteTime=ctx.currentTime+.1;scheduler()}else{clearTimeout(scheduleTimer);document.querySelectorAll('.led').forEach(l=>l.classList.remove('on'));document.querySelectorAll('.step').forEach(s=>s.classList.remove('playing'))}
+document.getElementById('sawBtn').onclick = () => {
+  waveform = 'sawtooth';
+  document.getElementById('sawBtn').classList.add('active');
+  document.getElementById('squareBtn').classList.remove('active');
+};
+document.getElementById('squareBtn').onclick = () => {
+  waveform = 'square';
+  document.getElementById('sawBtn').classList.remove('active');
+  document.getElementById('squareBtn').classList.add('active');
 };
 
-// Random Generator
-document.getElementById('randomBtn').onclick=()=>{
-const scale=document.getElementById('scaleSelect').value,genre=document.getElementById('genreSelect').value,density=p.density/100;
-genPattern(scale,genre,density);
+document.querySelectorAll('select[data-step]').forEach(sel => {
+  sel.addEventListener('change', e => {
+    seq[e.target.dataset.step].note = e.target.value;
+  });
+});
+
+document.querySelectorAll('.oct-down').forEach(btn => {
+  btn.addEventListener('click', e => {
+    const i = e.target.dataset.step;
+    if(seq[i].octave > 1) {
+      seq[i].octave--;
+      document.getElementById(`oct-${i}`).textContent = seq[i].octave;
+    }
+  });
+});
+
+document.querySelectorAll('.oct-up').forEach(btn => {
+  btn.addEventListener('click', e => {
+    const i = e.target.dataset.step;
+    if(seq[i].octave < 3) {
+      seq[i].octave++;
+      document.getElementById(`oct-${i}`).textContent = seq[i].octave;
+    }
+  });
+});
+
+document.querySelectorAll('.slide-btn').forEach(btn => {
+  btn.addEventListener('click', e => {
+    const i = e.target.dataset.step;
+    seq[i].slide =!seq[i].slide;
+    e.target.classList.toggle('active', seq[i].slide);
+  });
+});
+
+document.querySelectorAll('.accent-btn').forEach(btn => {
+  btn.addEventListener('click', e => {
+    const i = e.target.dataset.step;
+    seq[i].accent =!seq[i].accent;
+    e.target.classList.toggle('active', seq[i].accent);
+  });
+});
+
+document.getElementById('clearBtn').onclick = () => {
+  seq.forEach(s => {s.note='OFF'; s.octave=2; s.slide=false; s.accent=false;});
+  document.querySelectorAll('select[data-step]').forEach(sel => sel.value='OFF');
+  document.querySelectorAll('.oct-indicator').forEach(ind => ind.textContent='2');
+  document.querySelectorAll('.step-btn').forEach(btn => btn.classList.remove('active'));
 };
 
-function getScaleNotes(scaleName,root){
-return scales[scaleName].map(i=>baseNotes[(root+i)%12]);
+document.getElementById('runBtn').onclick = async () => {
+  if(ctx.state === 'suspended') await ctx.resume();
+  isRunning =!isRunning;
+  document.getElementById('runBtn').classList.toggle('active');
+  document.getElementById('runBtn').textContent = isRunning? 'STOP' : 'RUN';
+
+  if(isRunning) {
+    currentStep = 0;
+    nextNoteTime = ctx.currentTime + 0.1;
+    scheduler();
+  } else {
+    clearTimeout(scheduleTimer);
+    document.querySelectorAll('.led').forEach(led => led.classList.remove('on'));
+    document.querySelectorAll('.step').forEach(s => s.classList.remove('playing'));
+  }
+};
+
+// GENERADOR RANDOM POR GÉNERO
+document.getElementById('randomBtn').onclick = () => {
+  const scale = document.getElementById('scaleSelect').value;
+  const genre = document.getElementById('genreSelect').value;
+  const density = params.density / 100;
+
+  generatePattern(scale, genre, density);
+};
+
+function generatePattern(scaleName, genre, density) {
+  const scale = scales[scaleName];
+  const root = 0; // C como raíz
+
+  // Limpiar
+  seq.forEach(s => {s.note='OFF'; s.octave=2; s.slide=false; s.accent=false;});
+
+  // Generar notas de la escala
+  const scaleNotes = scale.map(interval => {
+    const noteIndex = (root + interval) % 12;
+    return baseNotes[noteIndex];
+  });
+
+  // Algoritmos por género
+  switch(genre) {
+    case 'acid':
+      generateAcidTechno(scaleNotes, density);
+      break;
+    case 'melodic':
+      generateMelodicTechno(scaleNotes, density);
+      break;
+    case 'techhouse':
+      generateTechHouse(scaleNotes, density);
+      break;
+    case 'minimal':
+      generateMinimalTechno(scaleNotes, density);
+      break;
+    case 'hightech':
+      generateHighTechMinimal(scaleNotes, density);
+      break;
+    case 'trance':
+      generateTrance(scaleNotes, density);
+      break;
+  }
+
+  // Actualizar UI
+  updateStepUI();
 }
 
-function genPattern(scaleName,genre,density){
-const notes=getScaleNotes(scaleName,p.root);
-seq.forEach(s=>{s.note='OFF';s.octave=2;s.slide=false;s.accent=false});
-if(genre==='acid')genAcid(notes,density);
-else if(genre==='melodic')genMelodic(notes,density);
-else if(genre==='techhouse')genTechHouse(notes,density);
-else if(genre==='minimal')genMinimal(notes,density);
-else if(genre==='hightech')genHighTech(notes,density);
-else if(genre==='hightech2')genHighTech2(notes,density);
-else if(genre==='trance')genTrance(notes,density);
-else if(genre==='dnb')genDnB(notes,density);
-updateUI();
+function generateAcidTechno(scaleNotes, density) {
+  // Acid: mucho slide, notas repetidas, acentos en 1,5,9,13
+  const root = scaleNotes[0];
+  const fifth = scaleNotes[4] || scaleNotes[0];
+
+  for(let i=0; i<16; i++) {
+    if(Math.random() < density) {
+      // Patrones típicos: 1-1-5-1, con slides
+      if(i%4 === 0 || Math.random() < 0.7) {
+        seq[i].note = Math.random() < 0.6? root : fifth;
+        seq[i].octave = Math.random() < 0.3? 1 : 2;
+        seq[i].accent = (i%4 === 0) || Math.random() < 0.3;
+        seq[i].slide = Math.random() < 0.6 && i > 0;
+      }
+    }
+  }
 }
 
-function genAcid(n,d){const r=n[0],f=n[4]||n[0];for(let i=0;i<16;i++)if(Math.random()<d)if(i%4===0||Math.random()<.7){seq[i].note=Math.random()<.6?r:f;seq[i].octave=Math.random()<.3?1:2;seq[i].accent=i%4===0||Math.random()<.3;seq[i].slide=Math.random()<.6&&i>0}}
-function genMelodic(n,d){const prog=[0,2,4,2];for(let i=0;i<16;i++)if(Math.random()<d){const p=Math.floor(i/4)%4;seq[i].note=n[prog[p]%n.length];seq[i].octave=i%8<4?2:3;seq[i].accent=i%4===0||Math.random()<.2;seq[i].slide=Math.random()<.3}}
-function genTechHouse(n,d){[0,3,4,7,10,12,15].forEach(i=>{if(Math.random()<d*1.2){seq[i].note=n[Math.floor(Math.random()*n.length)];seq[i].octave=2;seq[i].accent=[0,4,8,12].includes(i);seq[i].slide=Math.random()<.2}})}
-function genMinimal(n,d){const m=n[0],a=n[2]||n[1];[0,6,8,14].forEach(i=>{if(Math.random()<d){seq[i].note=Math.random()<.7?m:a;seq[i].octave=2;seq[i].accent=i===0;seq[i].slide=false}})}
-function genHighTech(n,d){for(let i=0;i<16;i+=2){if(Math.random()<d*.8){seq[i].note=n[Math.floor(Math.random()*3)];seq[i].octave=Math.random()<.5?2:3;seq[i].accent=Math.random()<.4;seq[i].slide=false}}}
-function genHighTech2(n,d){const drop=[4,5,12,13];for(let i=0;i<16;i++){if(drop.includes(i))continue;if(i%2===1&&Math.random()<d*.95){seq[i].note=n[Math.floor(Math.random()*3)];seq[i].octave=2;seq[i].accent=Math.random()<.8;seq[i].slide=false}if(i%4===0&&Math.random()<d*.9){seq[i].note=n[0];seq[i].octave=1;seq[i].accent=true;seq[i].slide=false}if(Math.random()<d*.5){seq[i].note=n[Math.floor(Math.random()*2)];seq[i].octave=3;seq[i].accent=Math.random()<.5}}}
-function genTrance(n,d){const arp=[0,2,4,7,4,2];for(let i=0;i<16;i++)if(Math.random()<d){const a=i%arp.length;seq[i].note=n[arp[a]%n.length];seq[i].octave=i<8?2:3;seq[i].accent=i%4===0;seq[i].slide=Math.random()<.4&&i>0}}
-function genDnB(n,d){const sub=n[0],high=n[4]||n[2];[0,3,6,8,11,14].forEach(i=>{if(Math.random()<d*.9){seq[i].note=sub;seq[i].octave=1;seq[i].accent=[0,8].includes(i);seq[i].slide=false}});[1,5,9,13].forEach(i=>{if(Math.random()<d*.7){seq[i].note=high;seq[i].octave=2;seq[i].accent=Math.random()<.5;seq[i].slide=Math.random()<.3}if(Math.random()<d*.5&&i+1<16){seq[i+1].note=sub;seq[i+1].octave=2;seq[i+1].accent=false;seq[i+1].slide=true}})}
+function generateMelodicTechno(scaleNotes, density) {
+  // Melodic: progresiones, menos caótico, más musical
+  const progression = [0, 2, 4, 2]; // I-iii-V-iii típico
 
-function updateUI(){
-seq.forEach((s,i)=>{
-document.querySelector(`select[data-step="${i}"]`).value=s.note;
-document.getElementById(`oct-${i}`).textContent=s.octave;
-document.querySelector(`.slide-btn[data-step="${i}"]`).classList.toggle('active',s.slide);
-document.querySelector(`.accent-btn[data-step="${i}"]`).classList.toggle('active',s.accent);
-})}
-
-function getStepFreq(step){
-if(step.note==='OFF')return null;
-let n=step.note;
-if(step.octave===1)n=step.note.replace('2','1');
-if(step.octave===3)n=step.note.replace('2','3');
-return noteFreq[n];
+  for(let i=0; i<16; i++) {
+    if(Math.random() < density) {
+      const progStep = Math.floor(i/4) % 4;
+      const noteIdx = progression[progStep];
+      seq[i].note = scaleNotes[noteIdx % scaleNotes.length];
+      seq[i].octave = i%8 < 4? 2 : 3;
+      seq[i].accent = i%4 === 0 || Math.random() < 0.2;
+      seq[i].slide = Math.random() < 0.3;
+    }
+  }
 }
 
-function getMidiNote(step){
-if(step.note==='OFF')return null;
-let n=step.note;
-if(step.octave===1)n=step.note.replace('2','1');
-if(step.octave===3)n=step.note.replace('2','3');
-return midiMap[n];
+function generateTechHouse(scaleNotes, density) {
+  // Tech House: groovy, síncopas, menos notas
+  const groove = [0,3,4,7,10,12,15];
+
+  groove.forEach(i => {
+    if(Math.random() < density * 1.2) {
+      seq[i].note = scaleNotes[Math.floor(Math.random() * scaleNotes.length)];
+      seq[i].octave = 2;
+      seq[i].accent = [0,4,8,12].includes(i);
+      seq[i].slide = Math.random() < 0.2;
+    }
+  });
+}
+
+function generateMinimalTechno(scaleNotes, density) {
+  // Minimal: muy pocas notas, mucho espacio, repetición
+  const mainNote = scaleNotes[0];
+  const altNote = scaleNotes[2] || scaleNotes[1];
+
+  [0,6,8,14].forEach(i => {
+    if(Math.random() < density) {
+      seq[i].note = Math.random() < 0.7? mainNote : altNote;
+      seq[i].octave = 2;
+      seq[i].accent = i === 0;
+      seq[i].slide = false;
+    }
+  });
+}
+
+function generateHighTechMinimal(scaleNotes, density) {
+  // High Tech: percusivo, rápido, notas cortas
+  for(let i=0; i<16; i+=2) {
+    if(Math.random() < density * 0.8) {
+      seq[i].note = scaleNotes[Math.floor(Math.random() * 3)]; // Solo primeras 3 notas
+      seq[i].octave = Math.random() < 0.5? 2 : 3;
+      seq[i].accent = Math.random() < 0.4;
+      seq[i].slide = false;
+    }
+  }
+}
+
+function generateTrance(scaleNotes, density) {
+  // Trance: arpegiado, ascendente, octavas altas
+  const arpPattern = [0,2,4,2,4,7,4,2];
+
+  for(let i=0; i<16; i++) {
+    if(Math.random() < density) {
+      const arpIdx = i % arpPattern.length;
+      seq[i].note = scaleNotes[arpPattern[arpIdx] % scaleNotes.length];
+      seq[i].octave = i < 8? 2 : 3;
+      seq[i].accent = i%4 === 0;
+      seq[i].slide = Math.random() < 0.4 && i > 0;
+    }
+  }
+}
+
+function updateStepUI() {
+  seq.forEach((s, i) => {
+    document.querySelector(`select[data-step="${i}"]`).value = s.note;
+    document.getElementById(`oct-${i}`).textContent = s.octave;
+    document.querySelector(`.slide-btn[data-step="${i}"]`).classList.toggle('active', s.slide);
+    document.querySelector(`.accent-btn[data-step="${i}"]`).classList.toggle('active', s.accent);
+  });
+}
+
+function getStepFreq(step) {
+  if(step.note === 'OFF') return null;
+  let baseNote = step.note;
+  if(step.octave === 1) baseNote = step.note.replace('2','1');
+  if(step.octave === 3) baseNote = step.note.replace('2','3');
+  return noteFreq[baseNote];
 }
 
 // Audio Engine
-function create303Voice(freq,time,slide,accent,duration,dest=ctx.destination){
-const osc=ctx.createOscillator(),filter=ctx.createBiquadFilter(),vca=ctx.createGain(),dist=ctx.createWaveShaper();
-osc.type=waveform;osc.frequency.value=freq*Math.pow(2,p.tune/12);
-if(p.dist>0){const k=p.dist*10,curve=new Float32Array(44100);for(let i=0;i<44100;i++){const x=i*2/44100-1;curve[i]=(1+k)*x/(1+k*Math.abs(x))}dist.curve=curve;dist.oversample='4x'}
-filter.type='lowpass';filter.Q.value=p.resonance;
-const base=p.cutoff,envAmt=p.envmod*(accent?1+p.accent:1),peak=Math.min(base+envAmt,18000);
-filter.frequency.setValueAtTime(base,time);filter.frequency.linearRampToValueAtTime(peak,time+.005);filter.frequency.exponentialRampToValueAtTime(base,time+p.decay);
-const amp=accent?.8:.4;
-vca.gain.setValueAtTime(0,time);vca.gain.linearRampToValueAtTime(amp,time+.003);
-if(slide)vca.gain.setValueAtTime(amp,time+duration-.01);else vca.gain.exponentialRampToValueAtTime(.001,time+p.decay);
-if(p.dist>0)osc.connect(dist).connect(filter).connect(vca).connect(dest);else osc.connect(filter).connect(vca).connect(dest);
-osc.start(time);osc.stop(time+duration+.1);
+function create303Voice(freq, time, slide, accent, duration) {
+  const osc = ctx.createOscillator();
+  const filter = ctx.createBiquadFilter();
+  const vca = ctx.createGain();
+  const dist = ctx.createWaveShaper();
+
+  osc.type = waveform;
+  osc.frequency.value = freq * Math.pow(2, params.tune/12);
+
+  if(params.dist > 0) {
+    const k = params.dist * 10;
+    const curve = new Float32Array(44100);
+    for(let i=0; i<44100; i++) {
+      const x = i * 2 / 44100 - 1;
+      curve[i] = (1 + k) * x / (1 + k * Math.abs(x));
+    }
+    dist.curve = curve;
+    dist.oversample = '4x';
+  }
+
+  filter.type = 'lowpass';
+  filter.Q.value = params.resonance;
+
+  const baseCutoff = params.cutoff;
+  const envAmount = params.envmod * (accent? 1 + params.accent : 1);
+  const peakCutoff = Math.min(baseCutoff + envAmount, 18000);
+
+  filter.frequency.setValueAtTime(baseCutoff, time);
+  filter.frequency.linearRampToValueAtTime(peakCutoff, time + 0.005);
+  filter.frequency.exponentialRampToValueAtTime(baseCutoff, time + params.decay);
+
+  const amp = accent? 0.8 : 0.4;
+  vca.gain.setValueAtTime(0, time);
+  vca.gain.linearRampToValueAtTime(amp, time + 0.003);
+
+  if(slide) {
+    vca.gain.setValueAtTime(amp, time + duration - 0.01);
+  } else {
+    vca.gain.exponentialRampToValueAtTime(0.001, time + params.decay);
+  }
+
+  if(params.dist > 0) {
+    osc.connect(dist).connect(filter).connect(vca).connect(ctx.destination);
+  } else {
+    osc.connect(filter).connect(vca).connect(ctx.destination);
+  }
+
+  osc.start(time);
+  osc.stop(time + duration + 0.1);
 }
 
-let lastFreq=65.41;
-function scheduler(){
-const stepTime=60/p.tempo/4;
-while(nextNoteTime<ctx.currentTime+.1){
-const step=seq[currentStep];
-document.querySelectorAll('.led').forEach((l,i)=>l.classList.toggle('on',i===currentStep));
-document.querySelectorAll('.step').forEach((s,i)=>s.classList.toggle('playing',i===currentStep));
-const freq=getStepFreq(step);
-if(freq){const isSlide=step.slide&&lastFreq,dur=isSlide?stepTime*2:stepTime*.9;create303Voice(freq,nextNoteTime,step.slide,step.accent,dur);lastFreq=freq}
-nextNoteTime+=stepTime;currentStep=(currentStep+1)%16}
-if(isRunning)scheduleTimer=setTimeout(scheduler,25);
+let lastFreq = 65.41;
+function scheduler() {
+  const secondsPerStep = 60.0 / params.tempo / 4;
+
+  while(nextNoteTime < ctx.currentTime + 0.1) {
+    const step = seq[currentStep];
+
+    document.querySelectorAll('.led').forEach((led,i) => {
+      led.classList.toggle('on', i === currentStep);
+    });
+    document.querySelectorAll('.step').forEach((s,i) => {
+      s.classList.toggle('playing', i === currentStep);
+    });
+
+    const freq = getStepFreq(step);
+    if(freq) {
+      const isSlide = step.slide && lastFreq;
+      const dur = isSlide? secondsPerStep * 2 : secondsPerStep * 0.9;
+      create303Voice(freq, nextNoteTime, step.slide, step.accent, dur);
+      lastFreq = freq;
+    }
+
+    nextNoteTime += secondsPerStep;
+    currentStep = (currentStep + 1) % 16;
+  }
+
+  if(isRunning) scheduleTimer = setTimeout(scheduler, 25);
 }
 
-document.body.addEventListener('click',()=>{if(ctx.state==='suspended')ctx.resume()},{once:true});
-<script>
-// EXPORT WAV - Graba 4 compases
-document.getElementById('exportWav').onclick=async()=>{
-const stepTime=60/p.tempo/4,totalDur=stepTime*16*4,sampleRate=44100;
-const offlineCtx=new OfflineAudioContext(2,sampleRate*totalDur,sampleRate);
-let t=.1,lastF=65.41;
-for(let bar=0;bar<4;bar++){
-for(let step=0;step<16;step++){
-const s=seq,freq=getStepFreq(s);
-if(freq){const isSlide=s.slide&&lastF,dur=isSlide?stepTime*2:stepTime*.9;renderStepOffline(offlineCtx,freq,t,s.slide,s.accent,dur);lastF=freq}
-t+=stepTime}}
-const buffer=await offlineCtx.startRendering();
-const wav=bufferToWav(buffer);
-downloadBlob(wav,`TB303_${currentPattern}_${allNotes[p.root]}_${document.getElementById('genreSelect').value}.wav`);
-};
-
-function renderStepOffline(octx,freq,time,slide,accent,duration){
-const osc=octx.createOscillator(),filter=octx.createBiquadFilter(),vca=octx.createGain();
-osc.type=waveform;osc.frequency.value=freq*Math.pow(2,p.tune/12);
-filter.type='lowpass';filter.Q.value=p.resonance;
-const base=p.cutoff,envAmt=p.envmod*(accent?1+p.accent:1),peak=Math.min(base+envAmt,18000);
-filter.frequency.setValueAtTime(base,time);filter.frequency.linearRampToValueAtTime(peak,time+.005);filter.frequency.exponentialRampToValueAtTime(base,time+p.decay);
-const amp=accent?.8:.4;
-vca.gain.setValueAtTime(0,time);vca.gain.linearRampToValueAtTime(amp,time+.003);vca.gain.exponentialRampToValueAtTime(.001,time+p.decay);
-osc.connect(filter).connect(vca).connect(octx.destination);
-osc.start(time);osc.stop(time+duration+.1);
-}
-
-function bufferToWav(buffer){
-const len=buffer.length*buffer.numberOfChannels*2+44,view=new DataView(new ArrayBuffer(len));
-const writeString=(o,s)=>{for(let i=0;i<s.length;i++)view.setUint8(o+i,s.charCodeAt(i))};
-writeString(0,'RIFF');view.setUint32(4,len-8,true);writeString(8,'WAVE');writeString(12,'fmt ');view.setUint32(16,16,true);view.setUint16(20,1,true);view.setUint16(22,buffer.numberOfChannels,true);view.setUint32(24,buffer.sampleRate,true);view.setUint32(28,buffer.sampleRate*4,true);view.setUint16(32,buffer.numberOfChannels*2,true);view.setUint16(34,16,true);writeString(36,'data');view.setUint32(40,len-44,true);
-let offset=44;for(let i=0;i<buffer.length;i++){for(let ch=0;ch<buffer.numberOfChannels;ch++){const sample=Math.max(-1,Math.min(1,buffer.getChannelData(ch)[i]));view.setInt16(offset,sample*0x7FFF,true);offset+=2}}
-return new Blob(,{type:'audio/wav'});
-}
-
-// EXPORT MIDI - 4 compases con slide/accent
-document.getElementById('exportMidi').onclick=()=>{
-const ticksPerBeat=96,ticksPerStep=ticksPerBeat/4;let events=[],currentTick=0;
-for(let bar=0;bar<4;bar++){
-for(let step=0;step<16;step++){
-const s=seq,midiNote=getMidiNote(s);
-if(midiNote){const velocity=s.accent?127:90,duration=s.slide?ticksPerStep*2:Math.floor(ticksPerStep*.9);events.push({tick:currentTick,type:'noteOn',note:midiNote,velocity:velocity});events.push({tick:currentTick+duration,type:'noteOff',note:midiNote,velocity:0})}
-currentTick+=ticksPerStep}}
-const midiData=createMidiFile(events,p.tempo);
-downloadBlob(midiData,`TB303_${currentPattern}_${allNotes[p.root]}_${document.getElementById('genreSelect').value}.mid`);
-};
-
-function createMidiFile(events,bpm){
-const header=new Uint8Array([0x4D,0x54,0x68,0x64,0x00,0x06,0x00,0x01,0x00,0x60]);
-let trackData=[];const mpq=Math.floor(60000000/bpm);
-trackData.push(0x00,0xFF,0x51,0x03,(mpq>>16)&0xFF,(mpq>>8)&0xFF,mpq&0xFF);
-let lastTick=0;events.sort((a,b)=>a.tick-b.tick);
-events.forEach(ev=>{const delta=ev.tick-lastTick;trackData.push(...encodeVarLen(delta));if(ev.type==='noteOn')trackData.push(0x90,ev.note,ev.velocity);else trackData.push(0x80,ev.note,0x00);lastTick=ev.tick});
-trackData.push(0x00,0xFF,0x2F,0x00);
-const trackLength=trackData.length,trackHeader=new Uint8Array([0x4D,0x54,0x72,0x6B,(trackLength>>24)&0xFF,(trackLength>>16)&0xFF,(trackLength>>8)&0xFF,trackLength&0xFF]);
-const fullMidi=new Uint8Array(header.length+trackHeader.length+trackData.length);
-fullMidi.set(header,0);fullMidi.set(trackHeader,header.length);fullMidi.set(trackData,header.length+trackHeader.length);
-return new Blob([fullMidi],{type:'audio/midi'});
-}
-
-function encodeVarLen(value){
-let buffer=value&0x7F,bytes=[];
-while((value>>=7)){buffer<<=8;buffer|=((value&0x7F)|0x80)}
-while(true){bytes.push(buffer&0xFF);if(buffer&0x80)buffer>>=8;else break}
-return bytes;
-}
-
-function downloadBlob(blob,filename){
-const url=URL.createObjectURL(blob),a=document.createElement('a');
-a.href=url;a.download=filename;document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
-}
+document.body.addEventListener('click', () => {
+  if(ctx.state === 'suspended') ctx.resume();
+}, {once: true});
 </script>
 </body>
 </html>
