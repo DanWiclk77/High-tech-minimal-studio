@@ -4,14 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#0A0A0A"/>
-    <title>FXT Studio AI v5.0</title>
-    <link rel="manifest" href='data:application/json,{"name":"FXT Studio AI","short_name":"FXT","start_url":".","display":"standalone","background_color":"#0A0A0A","theme_color":"#0A0A0A","icons":[{"src":"https://via.placeholder.com/512/0A0A0A/EAEAEA?text=FXT","sizes":"512x512"}]}'>
+    <title>FXT Studio AI v5.1</title>
+    <link rel="manifest" href='data:application/json,{"name":"FXT Studio AI","short_name":"FXT","start_url":".","display":"standalone","background_color":"#0A0A0A","theme_color":"#0A0A0A","icons":[{"src":"https://via.placeholder.com/512/0A/EAEAEA?text=FXT","sizes":"512x512"}]}'>
     <script src="https://unpkg.com/tone@14.7.77/build/Tone.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@magenta/music@1.23.1/es6/core.js"></script>
     <style>
         *{box-sizing:border-box}body{font-family:system-ui;background:#0A0A0A;color:#EAEAEA;margin:0;padding:12px}
         h1{font-size:18px;margin:0 0 12px 0}.row{display:flex;gap:8px;margin-bottom:12px}
-.agent{background:#1A1A1A;border:1px solid #333;border-radius:12px;padding:12px;margin-bottom:12px}
+.agent{background:#1A;border:1px solid #333;border-radius:12px;padding:12px;margin-bottom:12px}
 .agent h2{margin:0 0 8px 0;font-size:15px;display:flex;justify-content:space-between;align-items:center}
         button{background:#EAEAEA;color:#0A0A0A;border:none;padding:10px 14px;border-radius:8px;font-weight:600;width:100%;margin-top:8px;cursor:pointer;font-size:14px}
         button:disabled{background:#333;color:#666;cursor:not-allowed}
@@ -31,7 +31,7 @@
     </style>
 </head>
 <body>
-    <h1>FXT Studio AI v5.0 <span class="badge">PRO</span></h1>
+    <h1>FXT Studio AI v5.1 <span class="badge">PRO</span></h1>
     <div id="log">Iniciando...</div>
     <div class="agent">
         <label>OpenAI API Key - requerida para que los agentes generen</label>
@@ -41,12 +41,18 @@
         <div class="col"><label>BPM</label><input id="bpm" type="number" value="126"></div>
         <div class="col"><label>Tonalidad</label>
             <select id="key">
-                <option>C major</option><option>C minor</option><option>C# major</option><option>C# minor</option>
-                <option>D major</option><option>D minor</option><option>D# major</option><option>D# minor</option>
-                <option>E major</option><option>E minor</option><option>F major</option><option>F minor</option>
-                <option>F# major</option><option>F# minor</option><option>G major</option><option>G minor</option>
-                <option>G# major</option><option>G# minor</option><option>A major</option><option>A minor</option>
-                <option>A# major</option><option>A# minor</option><option>B major</option><option>B minor</option>
+                <option>C major</option><option>C minor</option>
+                <option>C# major</option><option>C# minor</option>
+                <option>D major</option><option>D minor</option>
+                <option>D# major</option><option>D# minor</option>
+                <option>E major</option><option>E minor</option>
+                <option>F major</option><option>F minor</option>
+                <option>F# major</option><option>F# minor</option>
+                <option>G major</option><option>G minor</option>
+                <option>G# major</option><option>G# minor</option>
+                <option>A major</option><option>A minor</option>
+                <option>A# major</option><option>A# minor</option>
+                <option>B major</option><option>B minor</option>
             </select>
         </div>
     </div>
@@ -92,6 +98,7 @@
 
 <script>
 'use strict';
+document.title='FXT v5.1 OK';
 const App = (function(){
     const logEl = document.getElementById('log');
     function log(msg, err=false){
@@ -100,13 +107,13 @@ const App = (function(){
         logEl.scrollTop = logEl.scrollHeight;
     }
     window.onerror = function(m,s,ln,col){log('ERROR JS línea '+ln+': '+m,true);updateStatus('prod-status','❌ Error JS');return true};
-    log('1. Script v5.0 iniciado');
+    log('1. Script v5.1 iniciado');
 
-    const Storage = {
-        save:p=>localStorage.setItem('fxt',JSON.stringify(p)),
-        load:()=>{const d=localStorage.getItem('fxt');return d?JSON.parse(d):null}
-    };
-    const Scales = {
+    document.getElementById('apikey').value=localStorage.getItem('OPENAI_KEY')||'';
+    log('2. DOM listo');
+
+    const Storage={save:function(p){localStorage.setItem('fxt',JSON.stringify(p))},load:function(){const d=localStorage.getItem('fxt');return d?JSON.parse(d):null}};
+    const Scales={
         'C major':['C','D','E','F','G','A','B'],'C minor':['C','D','Eb','F','G','Ab','Bb'],
         'C# major':['C#','D#','F','F#','G#','A#','C'],'C# minor':['C#','D#','E','F#','G#','A','B'],
         'D major':['D','E','F#','G','A','B','C#'],'D minor':['D','E','F','G','A','Bb','C'],
@@ -120,7 +127,7 @@ const App = (function(){
         'A# major':['A#','C','D','D#','F','G','A'],'A# minor':['A#','C','C#','D#','F#','G#'],
         'B major':['B','C#','D#','E','F#','G#','A#'],'B minor':['B','C#','D','E','F#','G','A']
     };
-    log('2. Escalas cargadas');
+    log('3. Escalas OK');
 
     let project = Storage.load() || {id:crypto.randomUUID(),stems:[],midi:[],mix:null,masters:{},producerObjective:null,mixerObjective:null,masteringObjective:null};
 
@@ -157,7 +164,7 @@ const App = (function(){
                 for(let i=0;i<d0.length;i++)rms+=d0[i]*d0[i];
                 rms=Math.sqrt(rms/d0.length);
                 return{peak:peakDb,lufs:parseFloat((20*Math.log10(rms||0.0001)-0.691).toFixed(1))};
-            }catch(e){log('Error análisis: '+e);return{lufs:-23,peak:-6}}
+            }catch(e){log('Error análisis: '+e,true);return{lufs:-23,peak:-6}}
         },
         async applyMixChain(bufs,opts){
             log('Mix: renderizando');
@@ -219,21 +226,27 @@ const App = (function(){
     const MIDI = {
         createMidiFile(notes,bpm){
             try{
-                if(typeof core==='undefined'){log('ERROR: Librería MIDI no cargó');return new Blob()}
+                if(typeof core==='undefined'){log('ERROR: Librería MIDI no cargó',true);return new Blob()}
                 const mm=new core.Midi();const track=mm.addTrack();const ppq=480;const ticksPerStep=ppq/4;
                 notes.forEach(function(n){
                     const start=n.step*ticksPerStep;
                     let dur=ticksPerStep;
                     if(n.duration)dur=n.duration*ppq;
                     if(n.slide)dur=ticksPerStep*2;
-                    if(n.notes){n.notes.forEach(function(note){track.addNote({midi:MIDI.noteToMidi(note),ticks:start,durationTicks:dur,velocity:90})}
-                    else{const m=MIDI.noteToMidi(n.note);track.addNote({midi:m,ticks:start,durationTicks:dur,velocity:n.accent?127:90})}
+                    if(n.notes){
+                        n.notes.forEach(function(note){
+                            track.addNote({midi:MIDI.noteToMidi(note),ticks:start,durationTicks:dur,velocity:90});
+                        });
+                    }else{
+                        const m=MIDI.noteToMidi(n.note);
+                        track.addNote({midi:m,ticks:start,durationTicks:dur,velocity:n.accent?127:90});
+                    }
                 });
                 return new Blob([mm.toArray()],{type:'audio/midi'});
-            }catch(e){log('Error MIDI: '+e);return new Blob()}
+            }catch(e){log('Error MIDI: '+e,true);return new Blob()}
         },
         noteToMidi(n){
-            const notes=['C','C#','D','D#','E','F#','G','G#','A','A#','B'];
+            const notes=['C','C#','D','D#','E','F#','G#','A','A#','B'];
             const m=n.match(/([A-G]#?)(\d)/);
             return notes.indexOf(m[1])+(parseInt(m[2])+1)*12;
         }
@@ -269,8 +282,9 @@ const App = (function(){
                     o.connect(g).connect(ctx.destination);
                     o.start(start);o.stop(start+dur);
                 };
-                if(n.notes){n.notes.forEach(function(note){playNote(note,n.step*sd,(n.duration||1)*sd)})}
-                else{
+                if(n.notes){
+                    n.notes.forEach(function(note){playNote(note,n.step*sd,(n.duration||1)*sd)});
+                }else{
                     const s=n.step*sd;
                     const d=n.slide?sd*1.9:sd*0.9;
                     if((type==='bass'&&(n.note.includes('0')||n.note.includes('1')))||type!=='bass'){playNote(n.note,s,d)}
