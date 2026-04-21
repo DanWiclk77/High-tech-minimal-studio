@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>TB-303 Web Emulator v6 - Multi Genre Pro</title>
+<title>TB-303 Web Emulator v7 - MIDI Universal</title>
 <style>
   body {
     background: #1a1a1a;
@@ -501,7 +501,6 @@ function generatePattern(scaleName, genre, density, rootOffset) {
   updateStepUI();
 }
 
-// BORIS BREJCHA: High-tech minimal, offbeat, mucho groove
 function generateBorisBrejcha(scaleNotes, density) {
   const pattern = [2,4,7,10,13,15];
   const root = scaleNotes[0], fifth = scaleNotes[4] || scaleNotes[0], second = scaleNotes[1] || root;
@@ -517,7 +516,6 @@ function generateBorisBrejcha(scaleNotes, density) {
   if(Math.random() < density) { seq[3].note = second; seq[3].octave = 2; seq[3].accent = true; }
 }
 
-// AMELIE LENS: Techno crudo, martilleante, octavas bajas
 function generateAmelieLens(scaleNotes, density) {
   const pattern = [0,4,8,12];
   const root = scaleNotes[0], seventh = scaleNotes[scaleNotes.length-1];
@@ -534,7 +532,6 @@ function generateAmelieLens(scaleNotes, density) {
   });
 }
 
-// HOZHO: Melódico oscuro, escalas menores, slides largos
 function generateHozho(scaleNotes, density) {
   const progression = [0, 4, 2, 4];
   for(let i=0; i<16; i++) {
@@ -548,7 +545,6 @@ function generateHozho(scaleNotes, density) {
   }
 }
 
-// CLAPTONE: House deep, contratiempos, swing
 function generateClaptone(scaleNotes, density) {
   const groove = [1,3,6,9,11,14];
   groove.forEach(i => {
@@ -561,7 +557,6 @@ function generateClaptone(scaleNotes, density) {
   });
 }
 
-// DEADMAU5: Progresivo, arpegiado, mucho sustain
 function generateDeadmau5(scaleNotes, density) {
   const arp = [0,2,4,7,4,2,0,4];
   for(let i=0; i<16; i++) {
@@ -574,9 +569,8 @@ function generateDeadmau5(scaleNotes, density) {
   }
 }
 
-// DASH BERLIN: Trance uplifting, arpegio ascendente
 function generateDashBerlin(scaleNotes, density) {
-  const arp = [0,2,4,2,4,7,9,7];
+  const arp = [0,2,4,7,9,7];
   for(let i=0; i<16; i++) {
     if(Math.random() < density) {
       seq[i].note = scaleNotes[arp[i%8] % scaleNotes.length];
@@ -587,7 +581,6 @@ function generateDashBerlin(scaleNotes, density) {
   }
 }
 
-// TECH HOUSE: Groovy, síncopas, menos notas, roll de bajo
 function generateTechHouse(scaleNotes, density) {
   const groove = [0,3,4,7,10,12,15];
   groove.forEach(i => {
@@ -600,7 +593,6 @@ function generateTechHouse(scaleNotes, density) {
   });
 }
 
-// MELODIC TECHNO: Progresiones, musical, menos caótico
 function generateMelodicTechno(scaleNotes, density) {
   const progression = [0, 2, 4, 2];
   for(let i=0; i<16; i++) {
@@ -614,9 +606,8 @@ function generateMelodicTechno(scaleNotes, density) {
   }
 }
 
-// DETROIT TECHNO: Soul, acordes implícitos, 1-3-5-7
 function generateDetroitTechno(scaleNotes, density) {
-  const chord = [0,2,4,6]; // 1-3-5-7
+  const chord = [0,2,4,6];
   [0,4,8,12].forEach(i => {
     if(Math.random() < density) {
       seq[i].note = scaleNotes[chord[Math.floor(i/4)%4] % scaleNotes.length];
@@ -633,7 +624,6 @@ function generateDetroitTechno(scaleNotes, density) {
   });
 }
 
-// BERLIN TECHNO: Industrial, repetitivo, hipnótico
 function generateBerlinTechno(scaleNotes, density) {
   const root = scaleNotes[0];
   [0,2,4,6,8,10,12,14].forEach(i => {
@@ -646,7 +636,6 @@ function generateBerlinTechno(scaleNotes, density) {
   });
 }
 
-// UPLIFTING TRANCE: Arpegiado rápido, octavas altas, euforia
 function generateUpliftingTrance(scaleNotes, density) {
   const arp = [0,2,4,7,9,7,4,2];
   for(let i=0; i<16; i++) {
@@ -659,20 +648,18 @@ function generateUpliftingTrance(scaleNotes, density) {
   }
 }
 
-// PSYTRANCE: 16th notes, rolling bass, triplets implícitos
 function generatePsytrance(scaleNotes, density) {
   const root = scaleNotes[0], third = scaleNotes[2] || scaleNotes[1];
   for(let i=0; i<16; i++) {
     if(Math.random() < density * 0.9) {
-      seq[i].note = i%3 === 0? third : root; // Roll característico
+      seq[i].note = i%3 === 0? third : root;
       seq[i].octave = 1;
       seq[i].accent = i%4 === 0;
-      seq[i].slide = Math.random() < 0.8; // Mucho slide
+      seq[i].slide = Math.random() < 0.8;
     }
   }
 }
 
-// HOUSE: Clásico, funky, acordes de 7ma
 function generateHouse(scaleNotes, density) {
   const groove = [0,2,4,6,8,10,12,14];
   const seventh = scaleNotes[6] || scaleNotes[scaleNotes.length-1];
@@ -686,7 +673,6 @@ function generateHouse(scaleNotes, density) {
   });
 }
 
-// DRUM AND BASS: 170+ BPM, reese bass, síncopas
 function generateDrumAndBass(scaleNotes, density) {
   const dnbPattern = [0,3,6,9,12,15];
   const root = scaleNotes[0], third = scaleNotes[2] || scaleNotes[1];
@@ -707,7 +693,6 @@ function generateDrumAndBass(scaleNotes, density) {
   });
 }
 
-// ACID CLASSIC: TB-303 original
 function generateAcidClassic(scaleNotes, density) {
   const root = scaleNotes[0], fifth = scaleNotes[4] || scaleNotes[0];
   for(let i=0; i<16; i++) {
@@ -816,82 +801,93 @@ function scheduler() {
   if(isRunning) scheduleTimer = setTimeout(scheduler, 25);
 }
 
-// MIDI FORMATO 1 - COMPATIBLE UNIVERSAL: FL Studio Mobile, Ableton, Logic, Reaper, GarageBand
+// MIDI ESTÁNDAR: MThd Format 1, MTrk, PPQ 128, compatible FL Studio Mobile
 document.getElementById('downloadMidi').onclick = () => {
-  const PPQ = 960; // Estándar universal más compatible
-  const stepsPerBeat = 4;
-  const ticksPerStep = PPQ / stepsPerBeat;
+  const PPQN = 128; // PPQ 128 exacto como pediste
+  const ticksPerStep = PPQN / 4; // 32 ticks por 16th note
 
-  // Track 0: Tempo y Time Signature
-  let track0 = [];
-  const mpq = Math.floor(60000000 / params.tempo);
-  track0.push(0x00, 0xFF, 0x51, 0x03, (mpq>>16)&0xFF, (mpq>>8)&0xFF, mpq&0xFF); // Tempo
-  track0.push(0x00, 0xFF, 0x58, 0x04, 0x04, 0x02, 0x18, 0x08); // 4/4
-  track0.push(0x00, 0xFF, 0x2F, 0x00); // End of track
+  let events = [];
 
-  // Track 1: Notas
-  let track1Events = [];
-  let absTick = 0;
+  // 1. Tempo event en tick 0
+  const mpqn = Math.floor(60000000 / params.tempo);
+  events.push({tick: 0, data: [0xFF, 0x51, 0x03, (mpqn>>16)&0xFF, (mpqn>>8)&0xFF, mpqn&0xFF]});
 
+  // 2. Time Signature 4/4 en tick 0
+  events.push({tick: 0, data: [0xFF, 0x58, 0x04, 0x04, 0x02, 0x18, 0x08]});
+
+  // 3. Notas como "blip" cortos para máxima compatibilidad
   seq.forEach((step, i) => {
-    const stepTick = i * ticksPerStep;
     const freq = getStepFreq(step);
-
     if(freq) {
+      const startTick = i * ticksPerStep;
       const midiNote = Math.max(0, Math.min(127, Math.round(69 + 12 * Math.log2(freq / 440))));
       const vel = step.accent? 127 : 100;
-      const noteDur = Math.floor(ticksPerStep * (step.slide? 0.98 : 0.85));
+      const dur = step.slide? Math.floor(ticksPerStep * 0.95) : 16; // Blip corto o ligado
 
-      track1Events.push({tick: stepTick, msg: [0x90, midiNote, vel]});
-      track1Events.push({tick: stepTick + noteDur, msg: [0x80, midiNote, 0x40]});
+      // Note On
+      events.push({tick: startTick, data: [0x90, midiNote, vel]});
+      // Note Off
+      events.push({tick: startTick + dur, data: [0x80, midiNote, 0x40]});
     }
   });
 
-  // Ordenar por tick absoluto
-  track1Events.sort((a,b) => a.tick - b.tick);
+  // 4. End of Track
+  const totalTicks = 16 * ticksPerStep;
+  events.push({tick: totalTicks, data: [0xFF, 0x2F, 0x00]});
 
-  // Convertir a delta times
-  let track1 = [];
-  let lastTick = 0;
-  track1Events.forEach(ev => {
-    const delta = ev.tick - lastTick;
-    track1.push(...writeVarLen(delta));
-    track1.push(...ev.msg);
-    lastTick = ev.tick;
+  // Ordenar por tick absoluto
+  events.sort((a,b) => a.tick - b.tick);
+
+  // Convertir a delta times y construir track
+  let trackData = [];
+  let prevTick = 0;
+
+  events.forEach(ev => {
+    const delta = ev.tick - prevTick;
+    trackData.push(...toVLQ(delta));
+    trackData.push(...ev.data);
+    prevTick = ev.tick;
   });
 
-  // End of track 1
-  const endDelta = (16 * ticksPerStep) - lastTick;
-  track1.push(...writeVarLen(Math.max(0, endDelta)));
-  track1.push(0xFF, 0x2F, 0x00);
+  // Track 0: solo tempo/time sig/end
+  let track0 = [];
+  track0.push(0x00, 0xFF, 0x51, 0x03, (mpqn>>16)&0xFF, (mpqn>>8)&0xFF, mpqn&0xFF);
+  track0.push(0x00, 0xFF, 0x58, 0x04, 0x04, 0x02, 0x18, 0x08);
+  track0.push(0x00, 0xFF, 0x2F, 0x00);
 
-  // Construir archivo MIDI Formato 1
-  let midiData = [];
-  // Header: MThd, length=6, format=1, ntrks=2, division=PPQ
-  midiData.push(0x4D,0x54,0x68,0x64, 0x00,0x06, 0x00,0x01, 0x00,0x02);
-  midiData.push((PPQ>>8)&0xFF, PPQ&0xFF);
+  // Construir archivo completo
+  let midi = [];
 
-  // Track 0
-  midiData.push(0x4D,0x54,0x72,0x6B);
-  midiData.push((track0.length>>24)&0xFF, (track0.length>>16)&0xFF, (track0.length>>8)&0xFF, track0.length&0xFF);
-  midiData.push(...track0);
+  // MThd: 4D 54 68 64, length=6, format=1, ntrks=2, division=128
+  midi.push(0x4D,0x54,0x68,0x64, 0x00,0x06, 0x00,0x01, 0x00,0x02, 0x00,0x80);
 
-  // Track 1
-  midiData.push(0x4D,0x54,0x72,0x6B);
-  midiData.push((track1.length>>24)&0xFF, (track1.length>>16)&0xFF, (track1.length>>8)&0xFF, track1.length&0xFF);
-  midiData.push(...track1);
+  // MTrk 0: Tempo
+  midi.push(0x4D,0x54,0x72,0x6B);
+  midi.push((track0.length>>24)&0xFF, (track0.length>>16)&0xFF, (track0.length>>8)&0xFF, track0.length&0xFF);
+  midi.push(...track0);
 
-  downloadBlob(new Uint8Array(midiData), 'tb303_pattern.mid', 'audio/midi');
+  // MTrk 1: Notas
+  midi.push(0x4D,0x54,0x72,0x6B);
+  midi.push((trackData.length>>24)&0xFF, (trackData.length>>16)&0xFF, (trackData.length>>8)&0xFF, trackData.length&0xFF);
+  midi.push(...trackData);
+
+  downloadBlob(new Uint8Array(midi), 'tb303_pattern.mid', 'audio/midi');
 };
 
-// Variable Length Quantity correcto según spec MIDI
-function writeVarLen(value) {
+// VLQ Variable Length Quantity según spec MIDI oficial
+function toVLQ(value) {
   value = Math.floor(value);
+  if (value === 0) return [0];
+
   let bytes = [];
   bytes.push(value & 0x7F);
-  while ((value >>= 7) > 0) {
+  value >>= 7;
+
+  while (value > 0) {
     bytes.push((value & 0x7F) | 0x80);
+    value >>= 7;
   }
+
   return bytes.reverse();
 }
 
@@ -989,10 +985,10 @@ function audioBufferToWav(buffer) {
     pos += 4;
   }
 
-  setUint32(0x46464952); // "RIFF"
+  setUint32(0x46464952);
   setUint32(length - 8);
-  setUint32(0x45564157); // "WAVE"
-  setUint32(0x20746d66); // "fmt "
+  setUint32(0x45564157);
+  setUint32(0x20746d66);
   setUint32(16);
   setUint16(1);
   setUint16(numOfChan);
@@ -1000,7 +996,7 @@ function audioBufferToWav(buffer) {
   setUint32(buffer.sampleRate * 2 * numOfChan);
   setUint16(numOfChan * 2);
   setUint16(16);
-  setUint32(0x61746164); // "data"
+  setUint32(0x61746164);
   setUint32(length - pos - 4);
 
   for (let i = 0; i < buffer.numberOfChannels; i++) {
