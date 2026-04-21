@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>TB-303 Web Emulator v4 - High Tech 2</title>
+<title>TB-303 Web Emulator v5 - Producers Pack</title>
 <style>
   body {
     background: #1a1a1a;
@@ -275,15 +275,16 @@
       </select>
     </div>
     <div class="switch">
-      <label>Genre:</label>
+      <label>Style:</label>
       <select id="genreSelect">
-        <option value="acid">Acid Techno</option>
-        <option value="melodic">Melodic Techno</option>
-        <option value="techhouse">Tech House</option>
-        <option value="minimal">Minimal Techno</option>
-        <option value="hightech">High Tech Minimal</option>
-        <option value="hightech2">High Tech Minimal 2</option>
-        <option value="trance">Trance</option>
+        <option value="brejcha">Boris Brejcha</option>
+        <option value="amelie">Amelie Lens</option>
+        <option value="hozho">Hozho</option>
+        <option value="claptone">Claptone</option>
+        <option value="deadmau5">Deadmau5</option>
+        <option value="dashberlin">Dash Berlin</option>
+        <option value="dnb">Drum & Bass</option>
+        <option value="acid">Acid Classic</option>
       </select>
     </div>
     <div class="switch">
@@ -302,7 +303,7 @@
     <div class="led-row" id="leds"></div>
     <div class="steps" id="steps"></div>
     <div style="font-size:10px;color:#888;margin-top:8px;text-align:center">
-      NOTA | O- O+ | S A - Random genera patrones por género y escala
+      NOTA | O- O+ | S A - Random genera patrones por productor
     </div>
   </div>
 </div>
@@ -319,7 +320,6 @@ const params = {
   decay: 0.3, accent: 0.5, tempo: 128, dist: 0, density: 60
 };
 
-// Escalas - intervalos en semitonos desde la raíz
 const scales = {
   major: [0,2,4,5,7,9,11],
   minor: [0,2,3,5,7,8,10],
@@ -458,7 +458,7 @@ document.getElementById('runBtn').onclick = async () => {
   }
 };
 
-// GENERADOR RANDOM POR GÉNERO
+// GENERADOR POR PRODUCTOR
 document.getElementById('randomBtn').onclick = () => {
   const scale = document.getElementById('scaleSelect').value;
   const genre = document.getElementById('genreSelect').value;
@@ -470,149 +470,152 @@ document.getElementById('randomBtn').onclick = () => {
 
 function generatePattern(scaleName, genre, density, rootOffset) {
   const scale = scales[scaleName];
-
-  // Limpiar
   seq.forEach(s => {s.note='OFF'; s.octave=2; s.slide=false; s.accent=false;});
 
-  // Generar notas de la escala transpuesta a la root
   const scaleNotes = scale.map(interval => {
     const noteIndex = (rootOffset + interval) % 12;
     return allNotes[noteIndex] + '2';
   });
 
-  // Algoritmos por género
   switch(genre) {
-    case 'acid':
-      generateAcidTechno(scaleNotes, density);
-      break;
-    case 'melodic':
-      generateMelodicTechno(scaleNotes, density);
-      break;
-    case 'techhouse':
-      generateTechHouse(scaleNotes, density);
-      break;
-    case 'minimal':
-      generateMinimalTechno(scaleNotes, density);
-      break;
-    case 'hightech':
-      generateHighTechMinimal(scaleNotes, density);
-      break;
-    case 'hightech2':
-      generateHighTechMinimal2(scaleNotes, density);
-      break;
-    case 'trance':
-      generateTrance(scaleNotes, density);
-      break;
+    case 'brejcha': generateBorisBrejcha(scaleNotes, density); break;
+    case 'amelie': generateAmelieLens(scaleNotes, density); break;
+    case 'hozho': generateHozho(scaleNotes, density); break;
+    case 'claptone': generateClaptone(scaleNotes, density); break;
+    case 'deadmau5': generateDeadmau5(scaleNotes, density); break;
+    case 'dashberlin': generateDashBerlin(scaleNotes, density); break;
+    case 'dnb': generateDrumAndBass(scaleNotes, density); break;
+    case 'acid': generateAcidClassic(scaleNotes, density); break;
   }
 
   updateStepUI();
 }
 
-function generateAcidTechno(scaleNotes, density) {
-  const root = scaleNotes[0];
-  const fifth = scaleNotes[4] || scaleNotes[0];
+// BORIS BREJCHA: High-tech minimal, offbeat, mucho groove, slides cortos, síncopas
+function generateBorisBrejcha(scaleNotes, density) {
+  const pattern = [2,4,7,10,13,15];
+  const root = scaleNotes[0], fifth = scaleNotes[4] || scaleNotes[0], second = scaleNotes[1] || root;
 
+  pattern.forEach(i => {
+    if(Math.random() < density * 1.15) {
+      const r = Math.random();
+      seq[i].note = r < 0.55? root : r < 0.85? fifth : second;
+      seq[i].octave = Math.random() < 0.75? 2 : 1;
+      seq[i].accent = [2,10].includes(i) || Math.random() < 0.55;
+      seq[i].slide = Math.random() < 0.4 && i > 0;
+    }
+  });
+  if(Math.random() < density) { seq[3].note = second; seq[3].octave = 2; seq[3].accent = true; }
+}
+
+// AMELIE LENS: Techno crudo, martilleante, pocos elementos, acentos en 1 y 9, octavas bajas
+function generateAmelieLens(scaleNotes, density) {
+  const pattern = [0,4,8,12];
+  const root = scaleNotes[0], seventh = scaleNotes[scaleNotes.length-1];
+
+  pattern.forEach(i => {
+    if(Math.random() < density * 1.2) {
+      seq[i].note = Math.random() < 0.8? root : seventh;
+      seq[i].octave = 1; // Bien grave
+      seq[i].accent = true;
+      seq[i].slide = false;
+    }
+  });
+  // Ghost notes
+  [2,6,10,14].forEach(i => {
+    if(Math.random() < density * 0.4) {
+      seq[i].note = root;
+      seq[i].octave = 1;
+      seq[i].accent = false;
+    }
+  });
+}
+
+// HOZHO: Melódico, oscuro, étnico, usa 5tas y escalas menores, slides largos
+function generateHozho(scaleNotes, density) {
+  const progression = [0, 4, 2, 4]; // I-V-iii-V
   for(let i=0; i<16; i++) {
-    if(Math.random() < density) {
-      if(i%4 === 0 || Math.random() < 0.7) {
-        seq[i].note = Math.random() < 0.6? root : fifth;
-        seq[i].octave = Math.random() < 0.3? 1 : 2;
-        seq[i].accent = (i%4 === 0) || Math.random() < 0.3;
-        seq[i].slide = Math.random() < 0.6 && i > 0;
-      }
+    if(Math.random() < density * 0.9) {
+      const progStep = Math.floor(i/4) % 4;
+      seq[i].note = scaleNotes[progression[progStep] % scaleNotes.length];
+      seq[i].octave = i%8 < 4? 2 : 3;
+      seq[i].accent = i%4 === 0;
+      seq[i].slide = Math.random() < 0.6 && i > 0;
     }
   }
 }
 
-function generateMelodicTechno(scaleNotes, density) {
-  const progression = [0, 2, 4, 2];
-
-  for(let i=0; i<16; i++) {
+// CLAPTONE: House deep, groovy, swing, notas en contratiempo
+function generateClaptone(scaleNotes, density) {
+  const groove = [1,3,6,9,11,14]; // Contratiempos
+  groove.forEach(i => {
     if(Math.random() < density) {
-      const progStep = Math.floor(i/4) % 4;
-      const noteIdx = progression[progStep];
-      seq[i].note = scaleNotes[noteIdx % scaleNotes.length];
-      seq[i].octave = i%8 < 4? 2 : 3;
-      seq[i].accent = i%4 === 0 || Math.random() < 0.2;
+      seq[i].note = scaleNotes[Math.floor(Math.random() * 4)];
+      seq[i].octave = 2;
+      seq[i].accent = [1,9].includes(i);
       seq[i].slide = Math.random() < 0.3;
     }
-  }
-}
-
-function generateTechHouse(scaleNotes, density) {
-  const groove = [0,3,4,7,10,12,15];
-
-  groove.forEach(i => {
-    if(Math.random() < density * 1.2) {
-      seq[i].note = scaleNotes[Math.floor(Math.random() * scaleNotes.length)];
-      seq[i].octave = 2;
-      seq[i].accent = [0,4,8,12].includes(i);
-      seq[i].slide = Math.random() < 0.2;
-    }
   });
 }
 
-function generateMinimalTechno(scaleNotes, density) {
-  const mainNote = scaleNotes[0];
-  const altNote = scaleNotes[2] || scaleNotes[1];
-
-  [0,6,8,14].forEach(i => {
-    if(Math.random() < density) {
-      seq[i].note = Math.random() < 0.7? mainNote : altNote;
-      seq[i].octave = 2;
-      seq[i].accent = i === 0;
-      seq[i].slide = false;
-    }
-  });
-}
-
-function generateHighTechMinimal(scaleNotes, density) {
-  for(let i=0; i<16; i+=2) {
-    if(Math.random() < density * 0.8) {
-      seq[i].note = scaleNotes[Math.floor(Math.random() * 3)];
-      seq[i].octave = Math.random() < 0.5? 2 : 3;
-      seq[i].accent = Math.random() < 0.4;
-      seq[i].slide = false;
-    }
-  }
-}
-
-function generateHighTechMinimal2(scaleNotes, density) {
-  // Estilo Boris Brejcha: offbeat, mucho groove, síncopas, polirrítmico
-  const brejchaPattern = [2,4,7,10,13,15]; // Offbeats típicos
-  const root = scaleNotes[0];
-  const second = scaleNotes[1] || scaleNotes[0];
-  const fifth = scaleNotes[4] || scaleNotes[0];
-
-  brejchaPattern.forEach(i => {
+// DEADMAU5: Progresivo, arpegiado, mucho sustain, octavas altas
+function generateDeadmau5(scaleNotes, density) {
+  const arp = [0,2,4,7,4,2,0,4]; // Arpegio típico
+  for(let i=0; i<16; i++) {
     if(Math.random() < density * 1.1) {
-      // Alterna entre root, 2da y 5ta para ese roll característico
-      const rand = Math.random();
-      seq[i].note = rand < 0.5? root : rand < 0.8? fifth : second;
-      seq[i].octave = Math.random() < 0.7? 2 : 1; // Más grave, más tech
-      seq[i].accent = [2,10].includes(i) || Math.random() < 0.5;
-      seq[i].slide = Math.random() < 0.35 && i > 0;
+      seq[i].note = scaleNotes[arp[i%8] % scaleNotes.length];
+      seq[i].octave = i < 8? 2 : 3;
+      seq[i].accent = i%8 === 0;
+      seq[i].slide = true; // Deadmau5 usa mucho glide
     }
-  });
-
-  // Añade algunos fills en 16th
-  if(Math.random() < density) {
-    seq[3].note = second;
-    seq[3].octave = 2;
-    seq[3].accent = true;
   }
 }
 
-function generateTrance(scaleNotes, density) {
-  const arpPattern = [0,2,4,2,4,7,4,2];
-
+// DASH BERLIN: Trance uplifting, euforia, arpegiado ascendente, mayor
+function generateDashBerlin(scaleNotes, density) {
+  const arp = [0,2,4,2,4,7,9,7]; // Subida épica
   for(let i=0; i<16; i++) {
     if(Math.random() < density) {
-      const arpIdx = i % arpPattern.length;
-      seq[i].note = scaleNotes[arpPattern[arpIdx] % scaleNotes.length];
+      seq[i].note = scaleNotes[arp[i%8] % scaleNotes.length];
       seq[i].octave = i < 8? 2 : 3;
       seq[i].accent = i%4 === 0;
-      seq[i].slide = Math.random() < 0.4 && i > 0;
+      seq[i].slide = Math.random() < 0.25;
+    }
+  }
+}
+
+// DRUM AND BASS: 170+ BPM, notas rápidas, reese bass, síncopas
+function generateDrumAndBass(scaleNotes, density) {
+  const dnbPattern = [0,3,6,9,12,15]; // Síncopas DnB
+  const root = scaleNotes[0], third = scaleNotes[2] || scaleNotes[1];
+
+  dnbPattern.forEach(i => {
+    if(Math.random() < density) {
+      seq[i].note = Math.random() < 0.7? root : third;
+      seq[i].octave = 1; // Sub bass
+      seq[i].accent = [0,9].includes(i);
+      seq[i].slide = Math.random() < 0.7; // Reese bass glides
+    }
+  });
+  // Notas rápidas entre medias
+  [2,5,8,11,14].forEach(i => {
+    if(Math.random() < density * 0.5) {
+      seq[i].note = root;
+      seq[i].octave = 2;
+      seq[i].slide = true;
+    }
+  });
+}
+
+// ACID CLASSIC: TB-303 original, mucho slide y accent aleatorio
+function generateAcidClassic(scaleNotes, density) {
+  const root = scaleNotes[0], fifth = scaleNotes[4] || scaleNotes[0];
+  for(let i=0; i<16; i++) {
+    if(Math.random() < density) {
+      seq[i].note = Math.random() < 0.6? root : fifth;
+      seq[i].octave = Math.random() < 0.3? 1 : 2;
+      seq[i].accent = Math.random() < 0.4;
+      seq[i].slide = Math.random() < 0.6 && i > 0;
     }
   }
 }
@@ -633,7 +636,6 @@ function getStepFreq(step) {
   return noteFreq[baseNote];
 }
 
-// Audio Engine
 function create303Voice(freq, time, slide, accent, duration) {
   const osc = ctx.createOscillator();
   const filter = ctx.createBiquadFilter();
@@ -714,42 +716,65 @@ function scheduler() {
   if(isRunning) scheduleTimer = setTimeout(scheduler, 25);
 }
 
-// DESCARGA MIDI
+// MIDI COMPATIBLE FL STUDIO MOBILE + ABLETON
 document.getElementById('downloadMidi').onclick = () => {
-  const ticksPerBeat = 96;
+  const PPQ = 480; // Pulses per quarter note - estándar FL/Ableton
   const stepsPerBeat = 4;
-  let midiData = [];
+  const ticksPerStep = PPQ / stepsPerBeat;
 
-  // Header MIDI
-  midiData.push(...[0x4D,0x54,0x68,0x64, 0x00,0x06, 0x00,0x00, 0x00,0x01]);
-  midiData.push(...[(ticksPerBeat>>8)&0xFF, ticksPerBeat&0xFF]);
+  let trackEvents = [];
+  let currentTick = 0;
 
-  let trackData = [];
-  // Tempo
+  // Tempo Meta Event
   const mpq = Math.floor(60000000 / params.tempo);
-  trackData.push(0x00,0xFF,0x51,0x03, (mpq>>16)&0xFF, (mpq>>8)&0xFF, mpq&0xFF);
+  trackEvents.push({tick: 0, data: [0xFF, 0x51, 0x03, (mpq>>16)&0xFF, (mpq>>8)&0xFF, mpq&0xFF]});
 
-  const ticksPerStep = ticksPerBeat / stepsPerBeat;
+  // Time Signature 4/4
+  trackEvents.push({tick: 0, data: [0xFF, 0x58, 0x04, 0x04, 0x02, 0x18, 0x08]});
 
   seq.forEach((step, i) => {
+    const stepTick = i * ticksPerStep;
     const freq = getStepFreq(step);
+
     if(freq) {
       const midiNote = Math.round(69 + 12 * Math.log2(freq / 440));
-      const vel = step.accent? 127 : 90;
-      const dur = ticksPerStep * (step.slide? 0.95 : 0.8);
+      const vel = step.accent? 127 : 100;
+      const noteDur = Math.floor(ticksPerStep * (step.slide? 0.98 : 0.8));
 
-      trackData.push(...writeVarLen(i === 0? 0 : ticksPerStep));
-      trackData.push(0x90, midiNote, vel);
-      trackData.push(...writeVarLen(dur));
-      trackData.push(0x80, midiNote, 0x00);
-    } else {
-      trackData.push(...writeVarLen(ticksPerStep));
+      // Note On
+      trackEvents.push({tick: stepTick, data: [0x90, midiNote, vel]});
+      // Note Off
+      trackEvents.push({tick: stepTick + noteDur, data: [0x80, midiNote, 0x00]});
     }
   });
 
-  trackData.push(0x00,0xFF,0x2F,0x00);
+  // End of Track
+  const lastTick = 16 * ticksPerStep;
+  trackEvents.push({tick: lastTick, data: [0xFF, 0x2F, 0x00]});
 
-  midiData.push(...[0x4D,0x54,0x72,0x6B]);
+  // Ordenar eventos por tick
+  trackEvents.sort((a,b) => a.tick - b.tick);
+
+  // Construir track con delta times
+  let trackData = [];
+  let prevTick = 0;
+  trackEvents.forEach(ev => {
+    const delta = ev.tick - prevTick;
+    trackData.push(...writeVarLen(delta));
+    trackData.push(...ev.data);
+    prevTick = ev.tick;
+  });
+
+  // Header MIDI
+  let midiData = [];
+  midiData.push(...[0x4D,0x54,0x68,0x64]); // MThd
+  midiData.push(...[0x00,0x00,0x06]); // Header length
+  midiData.push(...[0x00,0x00]); // Format 0
+  midiData.push(...[0x00,0x01]); // 1 track
+  midiData.push(...[(PPQ>>8)&0xFF, PPQ&0xFF]); // PPQ
+
+  // Track chunk
+  midiData.push(...[0x4D,0x54,0x72,0x6B]); // MTrk
   const size = trackData.length;
   midiData.push((size>>24)&0xFF,(size>>16)&0xFF,(size>>8)&0xFF,size&0xFF);
   midiData.push(...trackData);
@@ -758,16 +783,23 @@ document.getElementById('downloadMidi').onclick = () => {
 };
 
 function writeVarLen(value) {
-  let buffer = value & 0x7F;
+  value = Math.floor(value);
   let bytes = [];
-  while ((value >>= 7)) {
+  let buffer = value & 0x7F;
+
+  while ((value >>= 7) > 0) {
     buffer <<= 8;
-    buffer |= ((value & 0x7F) | 0x80);
+    buffer |= 0x80;
+    buffer += (value & 0x7F);
   }
+
   while (true) {
     bytes.push(buffer & 0xFF);
-    if (buffer & 0x80) buffer >>= 8;
-    else break;
+    if (buffer & 0x80) {
+      buffer >>= 8;
+    } else {
+      break;
+    }
   }
   return bytes;
 }
@@ -848,43 +880,54 @@ function renderStepToContext(octx, freq, time, slide, accent, duration) {
 }
 
 function audioBufferToWav(buffer) {
-  const len = buffer.length * buffer.numberOfChannels * 2 + 44;
-  const view = new DataView(new ArrayBuffer(len));
+  const numOfChan = buffer.numberOfChannels;
+  const length = buffer.length * numOfChan * 2 + 44;
+  const bufferArray = new ArrayBuffer(length);
+  const view = new DataView(bufferArray);
   const channels = [];
   let offset = 0;
   let pos = 0;
 
-  function setUint16(data) { view.setUint16(pos, data, true); pos += 2; }
-  function setUint32(data) { view.setUint32(pos, data, true); pos += 4; }
+  function setUint16(data) {
+    view.setUint16(pos, data, true);
+    pos += 2;
+  }
 
-  setUint32(0x46464952); // "RIFF"
-  setUint32(len - 8);
-  setUint32(0x45564157); // "WAVE"
-  setUint32(0x20746d66); // "fmt "
+  function setUint32(data) {
+    view.setUint32(pos, data, true);
+    pos += 4;
+  }
+
+  // RIFF identifier
+  setUint32(0x46464952);
+  setUint32(length - 8);
+  setUint32(0x45564157);
+  setUint32(0x20746d66);
   setUint32(16);
   setUint16(1);
-  setUint16(buffer.numberOfChannels);
+  setUint16(numOfChan);
   setUint32(buffer.sampleRate);
-  setUint32(buffer.sampleRate * 2 * buffer.numberOfChannels);
-  setUint16(buffer.numberOfChannels * 2);
+  setUint32(buffer.sampleRate * 2 * numOfChan);
+  setUint16(numOfChan * 2);
   setUint16(16);
-  setUint32(0x61746164); // "data"
-  setUint32(len - pos - 4);
+  setUint32(0x61746164);
+  setUint32(length - pos - 4);
 
-  for(let i = 0; i < buffer.numberOfChannels; i++) {
+  for (let i = 0; i < buffer.numberOfChannels; i++) {
     channels.push(buffer.getChannelData(i));
   }
 
-  while(pos < len) {
-    for(let i = 0; i < buffer.numberOfChannels; i++) {
+  while (pos < length) {
+    for (let i = 0; i < numOfChan; i++) {
       let sample = Math.max(-1, Math.min(1, channels[i][offset]));
-      view.setInt16(pos, sample < 0? sample * 0x8000 : sample * 0x7FFF, true);
+      sample = sample < 0? sample * 0x8000 : sample * 0x7FFF;
+      view.setInt16(pos, sample, true);
       pos += 2;
     }
     offset++;
   }
 
-  return view.buffer;
+  return bufferArray;
 }
 
 function downloadBlob(data, filename, type) {
