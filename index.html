@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>TB-303 Web Emulator</title>
+<title>TB-303 Web Emulator v3 - Random Gen</title>
 <style>
   body {
     background: #1a1a1a;
@@ -13,37 +13,37 @@
     padding: 20px;
     margin: 0;
   }
- .tb303 {
+.tb303 {
     background: linear-gradient(#c8c8c0, #a8a89e);
-    width: 900px;
+    width: 980px;
     padding: 20px;
     border-radius: 8px;
     box-shadow: 0 10px 30px rgba(0,0,0,.6), inset 0 1px 0 #fff6;
     border: 3px solid #333;
   }
- .header {
+.header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 15px;
     color: #111;
   }
- .logo { font-weight: 900; font-size: 28px; letter-spacing: 1px; }
- .logo span { font-weight: 400; font-size: 14px; margin-left: 8px; }
+.logo { font-weight: 900; font-size: 28px; letter-spacing: 1px; }
+.logo span { font-weight: 400; font-size: 14px; margin-left: 8px; }
 
- .controls {
+.controls {
     display: grid;
     grid-template-columns: repeat(6, 1fr);
     gap: 15px;
-    margin-bottom: 20px;
+    margin-bottom: 15px;
     background: #222;
     padding: 15px;
     border-radius: 4px;
   }
- .knob-group {
+.knob-group {
     text-align: center;
   }
- .knob-group label {
+.knob-group label {
     display: block;
     font-size: 11px;
     color: #ccc;
@@ -54,22 +54,23 @@
     width: 100%;
     accent-color: #ff4500;
   }
- .value {
+.value {
     font-size: 10px;
     color: #ff4500;
     margin-top: 4px;
   }
 
- .switch-row {
+.switch-row {
     display: flex;
-    gap: 20px;
+    gap: 15px;
     align-items: center;
     background: #222;
     padding: 12px 15px;
     border-radius: 4px;
-    margin-bottom: 20px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
   }
- .switch {
+.switch {
     display: flex;
     align-items: center;
     gap: 8px;
@@ -89,28 +90,40 @@
   }
   button:hover { background: #555; }
   button.active { background: #ff4500; color: #111; }
+  select {
+    background: #111;
+    color: #ff4500;
+    border: 1px solid #444;
+    padding: 6px 10px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: 600;
+  }
 
- .sequencer {
+.sequencer {
     background: #222;
     padding: 15px;
     border-radius: 4px;
   }
- .steps {
+.steps {
     display: grid;
     grid-template-columns: repeat(16, 1fr);
     gap: 4px;
     margin-bottom: 10px;
   }
- .step {
+.step {
     background: #111;
     border: 1px solid #333;
     padding: 6px 2px;
     text-align: center;
     border-radius: 2px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
   }
- .step.active { background: #ff4500; color: #111; }
- .step.playing { box-shadow: 0 0 8px #ff4500; }
- .step select {
+.step.active { background: #ff4500; color: #111; }
+.step.playing { box-shadow: 0 0 8px #ff4500; }
+.step select {
     width: 100%;
     background: #000;
     color: #0f0;
@@ -118,11 +131,31 @@
     font-size: 11px;
     text-align: center;
   }
- .step input[type=checkbox] {
-    margin: 2px 0;
-    accent-color: #ff4500;
+.step-controls {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    gap: 2px;
   }
- .step-labels {
+.step-btn {
+    background: #333;
+    border: 1px solid #555;
+    color: #ccc;
+    font-size: 9px;
+    padding: 2px 4px;
+    border-radius: 2px;
+    cursor: pointer;
+    line-height: 1;
+    min-width: 18px;
+  }
+.step-btn:hover { background: #444; }
+.step-btn.active { background: #ff4500; color: #111; border-color: #ff4500; }
+.oct-indicator {
+    font-size: 8px;
+    color: #ff4500;
+    font-weight: 700;
+  }
+.step-labels {
     display: grid;
     grid-template-columns: repeat(16, 1fr);
     gap: 4px;
@@ -131,18 +164,18 @@
     color: #888;
     margin-bottom: 5px;
   }
- .led-row {
+.led-row {
     display: grid;
     grid-template-columns: repeat(16, 1fr);
     gap: 4px;
     margin-bottom: 5px;
   }
- .led {
+.led {
     height: 6px;
     background: #300;
     border-radius: 3px;
   }
- .led.on { background: #f00; box-shadow: 0 0 6px #f00; }
+.led.on { background: #f00; box-shadow: 0 0 6px #f00; }
 </style>
 </head>
 <body>
@@ -190,20 +223,53 @@
 
   <div class="switch-row">
     <div class="switch">
-      <label>Waveform:</label>
+      <label>Wave:</label>
       <button id="sawBtn" class="active">SAW</button>
       <button id="squareBtn">SQUARE</button>
     </div>
     <div class="switch">
       <label>Tempo:</label>
-      <input type="range" id="tempo" min="60" max="200" value="120" step="1" style="width:120px">
-      <span id="tempoVal" style="width:30px;display:inline-block">120</span>
+      <input type="range" id="tempo" min="60" max="200" value="128" step="1" style="width:100px">
+      <span id="tempoVal" style="width:30px;display:inline-block">128</span>
     </div>
     <div class="switch">
-      <label>Distortion:</label>
-      <input type="range" id="dist" min="0" max="100" value="0" step="1" style="width:100px">
-      <span id="distVal" style="width:30px;display:inline-block">0</span>
+      <label>Dist:</label>
+      <input type="range" id="dist" min="0" max="100" value="0" step="1" style="width:80px">
+      <span id="distVal" style="width:25px;display:inline-block">0</span>
     </div>
+  </div>
+
+  <div class="switch-row">
+    <div class="switch">
+      <label>Scale:</label>
+      <select id="scaleSelect">
+        <option value="minor">Natural Minor</option>
+        <option value="major">Major</option>
+        <option value="harmonic">Harmonic Minor</option>
+        <option value="melodic">Melodic Minor</option>
+        <option value="pentatonic_maj">Pentatonic Major</option>
+        <option value="pentatonic_min">Pentatonic Minor</option>
+        <option value="blues">Blues</option>
+        <option value="chromatic">Chromatic</option>
+      </select>
+    </div>
+    <div class="switch">
+      <label>Genre:</label>
+      <select id="genreSelect">
+        <option value="acid">Acid Techno</option>
+        <option value="melodic">Melodic Techno</option>
+        <option value="techhouse">Tech House</option>
+        <option value="minimal">Minimal Techno</option>
+        <option value="hightech">High Tech Minimal</option>
+        <option value="trance">Trance</option>
+      </select>
+    </div>
+    <div class="switch">
+      <label>Density:</label>
+      <input type="range" id="density" min="20" max="100" value="60" step="5" style="width:80px">
+      <span id="densityVal" style="width:35px;display:inline-block">60%</span>
+    </div>
+    <button id="randomBtn" style="background:#ff4500;color:#111">RANDOM</button>
   </div>
 
   <div class="sequencer">
@@ -214,7 +280,7 @@
     <div class="led-row" id="leds"></div>
     <div class="steps" id="steps"></div>
     <div style="font-size:10px;color:#888;margin-top:8px;text-align:center">
-      NOTA | SLIDE | ACCENT - Selecciona C1 a C3 para cada paso
+      NOTA | O- O+ | S A - Random genera patrones por género y escala
     </div>
   </div>
 </div>
@@ -229,13 +295,29 @@ let scheduleTimer;
 
 const params = {
   tune: 0, cutoff: 1000, resonance: 10, envmod: 2000,
-  decay: 0.3, accent: 0.5, tempo: 120, dist: 0
+  decay: 0.3, accent: 0.5, tempo: 128, dist: 0, density: 60
 };
 
-const notes = ['OFF','C1','C#1','D1','D#1','E1','F1','F#1','G1','G#1','A1','A#1','B1','C2','C#2','D2','D#2','E2','F2','F#2','G2','G#2','A#2','B2','C3'];
-const noteFreq = {'C1':32.70,'C#1':34.65,'D1':36.71,'D#1':38.89,'E1':41.20,'F1':43.65,'F#1':46.25,'G1':49.00,'G#1':51.91,'A1':55.00,'A#1':58.27,'B1':61.74,'C2':65.41,'C#2':69.30,'D2':73.42,'D#2':77.78,'E2':82.41,'F2':87.31,'F#2':92.50,'G2':98.00,'G#2':103.8,'A2':110.0,'A#2':116.5,'B2':123.5,'C3':130.8};
+// Escalas - intervalos en semitonos desde la raíz
+const scales = {
+  major: [0,2,4,5,7,9,11],
+  minor: [0,2,3,5,7,8,10],
+  harmonic: [0,2,3,5,7,8,11],
+  melodic: [0,2,3,5,7,9,11],
+  pentatonic_maj: [0,2,4,7,9],
+  pentatonic_min: [0,3,5,7,10],
+  blues: [0,3,5,6,7,10],
+  chromatic: [0,1,2,3,4,5,6,7,8,9,10,11]
+};
 
-const seq = Array(16).fill().map(() => ({note: 'OFF', slide: false, accent: false}));
+const baseNotes = ['C2','C#2','D2','D#2','E2','F2','F#2','G2','G#2','A2','A#2','B2'];
+const noteFreq = {
+  'C1':32.70,'C#1':34.65,'D1':36.71,'D#1':38.89,'E1':41.20,'F1':43.65,'F#1':46.25,'G1':49.00,'G#1':51.91,'A1':55.00,'A#1':58.27,'B1':61.74,
+  'C2':65.41,'C#2':69.30,'D2':73.42,'D#2':77.78,'E2':82.41,'F2':87.31,'F#2':92.50,'G2':98.00,'G#2':103.8,'A2':110.0,'A#2':116.5,'B2':123.5,
+  'C3':130.8,'C#3':138.6,'D3':146.8,'D#3':155.6,'E3':164.8,'F3':174.6,'F#3':185.0,'G3':196.0,'G#3':207.7,'A3':220.0,'A#3':233.1,'B3':246.9
+};
+
+const seq = Array(16).fill().map(() => ({note: 'OFF', octave: 2, slide: false, accent: false}));
 
 // UI Setup
 const stepsDiv = document.getElementById('steps');
@@ -245,10 +327,18 @@ for(let i=0;i<16;i++){
   step.className = 'step';
   step.innerHTML = `
     <select data-step="${i}">
-      ${notes.map(n => `<option value="${n}">${n}</option>`).join('')}
+      <option value="OFF">OFF</option>
+      ${baseNotes.map(n => `<option value="${n}">${n}</option>`).join('')}
     </select>
-    <input type="checkbox" data-step="${i}" data-type="slide" title="Slide">
-    <input type="checkbox" data-step="${i}" data-type="accent" title="Accent">
+    <div class="step-controls">
+      <button class="step-btn oct-down" data-step="${i}">O-</button>
+      <span class="oct-indicator" id="oct-${i}">2</span>
+      <button class="step-btn oct-up" data-step="${i}">O+</button>
+    </div>
+    <div class="step-controls">
+      <button class="step-btn slide-btn" data-step="${i}">S</button>
+      <button class="step-btn accent-btn" data-step="${i}">A</button>
+    </div>
   `;
   stepsDiv.appendChild(step);
 
@@ -257,25 +347,15 @@ for(let i=0;i<16;i++){
   ledsDiv.appendChild(led);
 }
 
-// Pattern inicial ácido
-seq[0] = {note:'C2', slide:false, accent:true};
-seq[3] = {note:'C2', slide:true, accent:false};
-seq[4] = {note:'F2', slide:false, accent:true};
-seq[7] = {note:'D#2', slide:true, accent:false};
-seq[8] = {note:'G2', slide:false, accent:false};
-seq[11] = {note:'C2', slide:false, accent:true};
-seq[12] = {note:'A#1', slide:true, accent:false};
-seq[15] = {note:'C2', slide:false, accent:false};
-
-document.querySelectorAll('select').forEach((sel,i) => sel.value = seq[i].note);
-
 // Event listeners
 document.querySelectorAll('input[type=range]').forEach(input => {
   input.addEventListener('input', e => {
     const id = e.target.id;
     params[id] = parseFloat(e.target.value);
+    const val = params[id];
     document.getElementById(id+'Val').textContent =
-      id === 'decay' || id === 'accent' || id === 'resonance'? params[id].toFixed(2) : params[id];
+      id === 'density'? val + '%' :
+      id === 'decay' || id === 'accent' || id === 'resonance'? val.toFixed(2) : val;
   });
 });
 
@@ -290,22 +370,53 @@ document.getElementById('squareBtn').onclick = () => {
   document.getElementById('squareBtn').classList.add('active');
 };
 
-document.querySelectorAll('select').forEach(sel => {
+document.querySelectorAll('select[data-step]').forEach(sel => {
   sel.addEventListener('change', e => {
     seq[e.target.dataset.step].note = e.target.value;
   });
 });
 
-document.querySelectorAll('input[type=checkbox]').forEach(cb => {
-  cb.addEventListener('change', e => {
-    seq[e.target.dataset.step][e.target.dataset.type] = e.target.checked;
+document.querySelectorAll('.oct-down').forEach(btn => {
+  btn.addEventListener('click', e => {
+    const i = e.target.dataset.step;
+    if(seq[i].octave > 1) {
+      seq[i].octave--;
+      document.getElementById(`oct-${i}`).textContent = seq[i].octave;
+    }
+  });
+});
+
+document.querySelectorAll('.oct-up').forEach(btn => {
+  btn.addEventListener('click', e => {
+    const i = e.target.dataset.step;
+    if(seq[i].octave < 3) {
+      seq[i].octave++;
+      document.getElementById(`oct-${i}`).textContent = seq[i].octave;
+    }
+  });
+});
+
+document.querySelectorAll('.slide-btn').forEach(btn => {
+  btn.addEventListener('click', e => {
+    const i = e.target.dataset.step;
+    seq[i].slide =!seq[i].slide;
+    e.target.classList.toggle('active', seq[i].slide);
+  });
+});
+
+document.querySelectorAll('.accent-btn').forEach(btn => {
+  btn.addEventListener('click', e => {
+    const i = e.target.dataset.step;
+    seq[i].accent =!seq[i].accent;
+    e.target.classList.toggle('active', seq[i].accent);
   });
 });
 
 document.getElementById('clearBtn').onclick = () => {
-  seq.forEach(s => {s.note='OFF'; s.slide=false; s.accent=false;});
-  document.querySelectorAll('select').forEach(sel => sel.value='OFF');
-  document.querySelectorAll('input[type=checkbox]').forEach(cb => cb.checked=false);
+  seq.forEach(s => {s.note='OFF'; s.octave=2; s.slide=false; s.accent=false;});
+  document.querySelectorAll('select[data-step]').forEach(sel => sel.value='OFF');
+  document.querySelectorAll('.oct-indicator').forEach(ind => ind.textContent='2');
+  document.querySelectorAll('.step-btn').forEach(btn => btn.classList.remove('active'));
 };
 
 document.getElementById('runBtn').onclick = async () => {
@@ -325,7 +436,162 @@ document.getElementById('runBtn').onclick = async () => {
   }
 };
 
-// Audio Engine - emulando el circuito del 303
+// GENERADOR RANDOM POR GÉNERO
+document.getElementById('randomBtn').onclick = () => {
+  const scale = document.getElementById('scaleSelect').value;
+  const genre = document.getElementById('genreSelect').value;
+  const density = params.density / 100;
+
+  generatePattern(scale, genre, density);
+};
+
+function generatePattern(scaleName, genre, density) {
+  const scale = scales[scaleName];
+  const root = 0; // C como raíz
+
+  // Limpiar
+  seq.forEach(s => {s.note='OFF'; s.octave=2; s.slide=false; s.accent=false;});
+
+  // Generar notas de la escala
+  const scaleNotes = scale.map(interval => {
+    const noteIndex = (root + interval) % 12;
+    return baseNotes[noteIndex];
+  });
+
+  // Algoritmos por género
+  switch(genre) {
+    case 'acid':
+      generateAcidTechno(scaleNotes, density);
+      break;
+    case 'melodic':
+      generateMelodicTechno(scaleNotes, density);
+      break;
+    case 'techhouse':
+      generateTechHouse(scaleNotes, density);
+      break;
+    case 'minimal':
+      generateMinimalTechno(scaleNotes, density);
+      break;
+    case 'hightech':
+      generateHighTechMinimal(scaleNotes, density);
+      break;
+    case 'trance':
+      generateTrance(scaleNotes, density);
+      break;
+  }
+
+  // Actualizar UI
+  updateStepUI();
+}
+
+function generateAcidTechno(scaleNotes, density) {
+  // Acid: mucho slide, notas repetidas, acentos en 1,5,9,13
+  const root = scaleNotes[0];
+  const fifth = scaleNotes[4] || scaleNotes[0];
+
+  for(let i=0; i<16; i++) {
+    if(Math.random() < density) {
+      // Patrones típicos: 1-1-5-1, con slides
+      if(i%4 === 0 || Math.random() < 0.7) {
+        seq[i].note = Math.random() < 0.6? root : fifth;
+        seq[i].octave = Math.random() < 0.3? 1 : 2;
+        seq[i].accent = (i%4 === 0) || Math.random() < 0.3;
+        seq[i].slide = Math.random() < 0.6 && i > 0;
+      }
+    }
+  }
+}
+
+function generateMelodicTechno(scaleNotes, density) {
+  // Melodic: progresiones, menos caótico, más musical
+  const progression = [0, 2, 4, 2]; // I-iii-V-iii típico
+
+  for(let i=0; i<16; i++) {
+    if(Math.random() < density) {
+      const progStep = Math.floor(i/4) % 4;
+      const noteIdx = progression[progStep];
+      seq[i].note = scaleNotes[noteIdx % scaleNotes.length];
+      seq[i].octave = i%8 < 4? 2 : 3;
+      seq[i].accent = i%4 === 0 || Math.random() < 0.2;
+      seq[i].slide = Math.random() < 0.3;
+    }
+  }
+}
+
+function generateTechHouse(scaleNotes, density) {
+  // Tech House: groovy, síncopas, menos notas
+  const groove = [0,3,4,7,10,12,15];
+
+  groove.forEach(i => {
+    if(Math.random() < density * 1.2) {
+      seq[i].note = scaleNotes[Math.floor(Math.random() * scaleNotes.length)];
+      seq[i].octave = 2;
+      seq[i].accent = [0,4,8,12].includes(i);
+      seq[i].slide = Math.random() < 0.2;
+    }
+  });
+}
+
+function generateMinimalTechno(scaleNotes, density) {
+  // Minimal: muy pocas notas, mucho espacio, repetición
+  const mainNote = scaleNotes[0];
+  const altNote = scaleNotes[2] || scaleNotes[1];
+
+  [0,6,8,14].forEach(i => {
+    if(Math.random() < density) {
+      seq[i].note = Math.random() < 0.7? mainNote : altNote;
+      seq[i].octave = 2;
+      seq[i].accent = i === 0;
+      seq[i].slide = false;
+    }
+  });
+}
+
+function generateHighTechMinimal(scaleNotes, density) {
+  // High Tech: percusivo, rápido, notas cortas
+  for(let i=0; i<16; i+=2) {
+    if(Math.random() < density * 0.8) {
+      seq[i].note = scaleNotes[Math.floor(Math.random() * 3)]; // Solo primeras 3 notas
+      seq[i].octave = Math.random() < 0.5? 2 : 3;
+      seq[i].accent = Math.random() < 0.4;
+      seq[i].slide = false;
+    }
+  }
+}
+
+function generateTrance(scaleNotes, density) {
+  // Trance: arpegiado, ascendente, octavas altas
+  const arpPattern = [0,2,4,2,4,7,4,2];
+
+  for(let i=0; i<16; i++) {
+    if(Math.random() < density) {
+      const arpIdx = i % arpPattern.length;
+      seq[i].note = scaleNotes[arpPattern[arpIdx] % scaleNotes.length];
+      seq[i].octave = i < 8? 2 : 3;
+      seq[i].accent = i%4 === 0;
+      seq[i].slide = Math.random() < 0.4 && i > 0;
+    }
+  }
+}
+
+function updateStepUI() {
+  seq.forEach((s, i) => {
+    document.querySelector(`select[data-step="${i}"]`).value = s.note;
+    document.getElementById(`oct-${i}`).textContent = s.octave;
+    document.querySelector(`.slide-btn[data-step="${i}"]`).classList.toggle('active', s.slide);
+    document.querySelector(`.accent-btn[data-step="${i}"]`).classList.toggle('active', s.accent);
+  });
+}
+
+function getStepFreq(step) {
+  if(step.note === 'OFF') return null;
+  let baseNote = step.note;
+  if(step.octave === 1) baseNote = step.note.replace('2','1');
+  if(step.octave === 3) baseNote = step.note.replace('2','3');
+  return noteFreq[baseNote];
+}
+
+// Audio Engine
 function create303Voice(freq, time, slide, accent, duration) {
   const osc = ctx.createOscillator();
   const filter = ctx.createBiquadFilter();
@@ -335,7 +601,6 @@ function create303Voice(freq, time, slide, accent, duration) {
   osc.type = waveform;
   osc.frequency.value = freq * Math.pow(2, params.tune/12);
 
-  // Distorsión para el crunch ácido
   if(params.dist > 0) {
     const k = params.dist * 10;
     const curve = new Float32Array(44100);
@@ -347,7 +612,6 @@ function create303Voice(freq, time, slide, accent, duration) {
     dist.oversample = '4x';
   }
 
-  // Filtro 24dB/oct resonante como el 303 original
   filter.type = 'lowpass';
   filter.Q.value = params.resonance;
 
@@ -359,7 +623,6 @@ function create303Voice(freq, time, slide, accent, duration) {
   filter.frequency.linearRampToValueAtTime(peakCutoff, time + 0.005);
   filter.frequency.exponentialRampToValueAtTime(baseCutoff, time + params.decay);
 
-  // VCA envelope
   const amp = accent? 0.8 : 0.4;
   vca.gain.setValueAtTime(0, time);
   vca.gain.linearRampToValueAtTime(amp, time + 0.003);
@@ -370,7 +633,6 @@ function create303Voice(freq, time, slide, accent, duration) {
     vca.gain.exponentialRampToValueAtTime(0.001, time + params.decay);
   }
 
-  // Conexiones
   if(params.dist > 0) {
     osc.connect(dist).connect(filter).connect(vca).connect(ctx.destination);
   } else {
@@ -379,8 +641,6 @@ function create303Voice(freq, time, slide, accent, duration) {
 
   osc.start(time);
   osc.stop(time + duration + 0.1);
-
-  return {osc, filter};
 }
 
 let lastFreq = 65.41;
@@ -390,7 +650,6 @@ function scheduler() {
   while(nextNoteTime < ctx.currentTime + 0.1) {
     const step = seq[currentStep];
 
-    // LEDs
     document.querySelectorAll('.led').forEach((led,i) => {
       led.classList.toggle('on', i === currentStep);
     });
@@ -398,11 +657,10 @@ function scheduler() {
       s.classList.toggle('playing', i === currentStep);
     });
 
-    if(step.note!== 'OFF') {
-      const freq = noteFreq[step.note];
+    const freq = getStepFreq(step);
+    if(freq) {
       const isSlide = step.slide && lastFreq;
       const dur = isSlide? secondsPerStep * 2 : secondsPerStep * 0.9;
-
       create303Voice(freq, nextNoteTime, step.slide, step.accent, dur);
       lastFreq = freq;
     }
@@ -414,7 +672,6 @@ function scheduler() {
   if(isRunning) scheduleTimer = setTimeout(scheduler, 25);
 }
 
-// Activar audio en primer click
 document.body.addEventListener('click', () => {
   if(ctx.state === 'suspended') ctx.resume();
 }, {once: true});
