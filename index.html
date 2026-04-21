@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>TB-303 Web Emulator v7 - MIDI Universal</title>
+<title>TB-303 Web Emulator v8 - MIDI Roland Compatible</title>
 <style>
   body {
     background: #1a1a1a;
@@ -801,83 +801,73 @@ function scheduler() {
   if(isRunning) scheduleTimer = setTimeout(scheduler, 25);
 }
 
-// MIDI ESTÁNDAR: MThd Format 1, MTrk, PPQ 128, compatible FL Studio Mobile
+// MIDI FORMAT 0 - COMPATIBLE ROLAND TB-303 PLUGIN + FL STUDIO MOBILE
 document.getElementById('downloadMidi').onclick = () => {
-  const PPQN = 128; // PPQ 128 exacto como pediste
-  const ticksPerStep = PPQN / 4; // 32 ticks por 16th note
-
+  const PPQN = 96; // 96 ticks per quarter = estándar Roland
+  const ticksPerStep = 24; // 16th note = 96/4
   let events = [];
 
-  // 1. Tempo event en tick 0
+  // Tempo Meta Event - debe ir primero
   const mpqn = Math.floor(60000000 / params.tempo);
-  events.push({tick: 0, data: [0xFF, 0x51, 0x03, (mpqn>>16)&0xFF, (mpqn>>8)&0xFF, mpqn&0xFF]});
+  events.push({t: 0, d: [0xFF, 0x51, 0x03, (mpqn>>16)&0xFF, (mpqn>>8)&0xFF, mpqn&0xFF]});
 
-  // 2. Time Signature 4/4 en tick 0
-  events.push({tick: 0, data: [0xFF, 0x58, 0x04, 0x04, 0x02, 0x18, 0x08]});
+  // Time Signature 4/4
+  events.push({t: 0, d: [0xFF, 0x58, 0x04, 0x04, 0x02, 0x18, 0x08]});
 
-  // 3. Notas como "blip" cortos para máxima compatibilidad
+  // Track Name
+  const name = 'TB-303 Bassline';
+  let nameBytes = [0xFF, 0x03, name.length];
+  for(let i=0; i<name.length; i++) nameBytes.push(name.charCodeAt(i));
+  events.push({t: 0, d: nameBytes});
+
+  // Notas en canal 0 - estilo Roland: notas cortas tipo blip
   seq.forEach((step, i) => {
     const freq = getStepFreq(step);
     if(freq) {
       const startTick = i * ticksPerStep;
       const midiNote = Math.max(0, Math.min(127, Math.round(69 + 12 * Math.log2(freq / 440))));
       const vel = step.accent? 127 : 100;
-      const dur = step.slide? Math.floor(ticksPerStep * 0.95) : 16; // Blip corto o ligado
+      // Roland usa duraciones cortas: 20 ticks normal, 23 ticks si hay slide
+      const dur = step.slide? 23 : 20;
 
-      // Note On
-      events.push({tick: startTick, data: [0x90, midiNote, vel]});
-      // Note Off
-      events.push({tick: startTick + dur, data: [0x80, midiNote, 0x40]});
+      events.push({t: startTick, d: [0x90, midiNote, vel]}); // Note On Ch1
+      events.push({t: startTick + dur, d: [0x80, midiNote, 0x40]}); // Note Off Ch1
     }
   });
 
-  // 4. End of Track
-  const totalTicks = 16 * ticksPerStep;
-  events.push({tick: totalTicks, data: [0xFF, 0x2F, 0x00]});
+  // End of Track
+  events.push({t: 16 * ticksPerStep, d: [0xFF, 0x2F, 0x00]});
 
-  // Ordenar por tick absoluto
-  events.sort((a,b) => a.tick - b.tick);
+  // Ordenar por tick
+  events.sort((a,b) => a.t - b.t);
 
-  // Convertir a delta times y construir track
-  let trackData = [];
-  let prevTick = 0;
+  // Convertir a delta times y construir chunk
+  let track = [];
+  let lastTick = 0;
 
   events.forEach(ev => {
-    const delta = ev.tick - prevTick;
-    trackData.push(...toVLQ(delta));
-    trackData.push(...ev.data);
-    prevTick = ev.tick;
+    const delta = ev.t - lastTick;
+    track.push(...toVLQ(delta));
+    track.push(...ev.d);
+    lastTick = ev.t;
   });
 
-  // Track 0: solo tempo/time sig/end
-  let track0 = [];
-  track0.push(0x00, 0xFF, 0x51, 0x03, (mpqn>>16)&0xFF, (mpqn>>8)&0xFF, mpqn&0xFF);
-  track0.push(0x00, 0xFF, 0x58, 0x04, 0x04, 0x02, 0x18, 0x08);
-  track0.push(0x00, 0xFF, 0x2F, 0x00);
-
-  // Construir archivo completo
+  // Construir archivo: MThd + MTrk
   let midi = [];
-
-  // MThd: 4D 54 68 64, length=6, format=1, ntrks=2, division=128
-  midi.push(0x4D,0x54,0x68,0x64, 0x00,0x06, 0x00,0x01, 0x00,0x02, 0x00,0x80);
-
-  // MTrk 0: Tempo
+  // MThd: 4D 54 68 64, length=6, format=0, ntrks=1, division=96
+  midi.push(0x4D,0x54,0x68,0x64, 0x00,0x00,0x00,0x06, 0x00,0x00, 0x00,0x01, 0x00,0x60);
+  // MTrk
   midi.push(0x4D,0x54,0x72,0x6B);
-  midi.push((track0.length>>24)&0xFF, (track0.length>>16)&0xFF, (track0.length>>8)&0xFF, track0.length&0xFF);
-  midi.push(...track0);
-
-  // MTrk 1: Notas
-  midi.push(0x4D,0x54,0x72,0x6B);
-  midi.push((trackData.length>>24)&0xFF, (trackData.length>>16)&0xFF, (trackData.length>>8)&0xFF, trackData.length&0xFF);
-  midi.push(...trackData);
+  midi.push((track.length>>24)&0xFF, (track.length>>16)&0xFF, (track.length>>8)&0xFF, track.length&0xFF);
+  midi.push(...track);
 
   downloadBlob(new Uint8Array(midi), 'tb303_pattern.mid', 'audio/midi');
 };
 
-// VLQ Variable Length Quantity según spec MIDI oficial
+// VLQ según spec MIDI oficial - idéntico al usado por Roland
 function toVLQ(value) {
   value = Math.floor(value);
-  if (value === 0) return [0];
+  if (value === 0) return [0x00];
 
   let bytes = [];
   bytes.push(value & 0x7F);
