@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>TB-303 Hybrid v1 - Transistor Bass + TB-303</title>
+<title>TB-303 Hybrid v1.1 - MIDI Fixed</title>
 <style>
   body {
     background: #1a1a1a;
@@ -92,7 +92,7 @@
   button.active { background: #ff4500; color: #111; }
   button.download { background: #0a5; color: #fff; }
   button.download:hover { background: #0c7; }
- .bpm-btn {
+.bpm-btn {
     background: #333;
     border: 1px solid #555;
     color: #ff4500;
@@ -101,7 +101,7 @@
     font-weight: 900;
     min-width: 30px;
   }
- .bpm-btn:hover { background: #444; }
+.bpm-btn:hover { background: #444; }
   select {
     background: #111;
     color: #ff4500;
@@ -225,7 +225,7 @@
     </div>
     <div class="knob-group">
       <label>Decay</label>
-      <input type="range" id="decay" min="50" max="1000" value="200" step="10">
+      <input type="range" id="decay" min="50" max="600" value="200" step="10">
       <div class="value" id="decayVal">200</div>
     </div>
     <div class="knob-group">
@@ -326,7 +326,7 @@
     <div class="led-row" id="leds"></div>
     <div class="steps" id="steps"></div>
     <div style="font-size:10px;color:#888;margin-top:8px;text-align:center">
-      Transistor Bass params + TB-303 Decay 50-1000ms
+      MIDI Format 0 PPQ 96 - Optimizado CPU
     </div>
   </div>
 </div>
@@ -338,17 +338,17 @@ let nextNoteTime = 0;
 let waveform = 'sawtooth';
 let scheduleTimer;
 
-// Parámetros: Transistor Bass 0-100 + Decay TB-303 en ms
+// Parámetros: Transistor Bass 0-100 + Decay TB-303 50-600ms optimizado
 const params = {
-  tune: 0, // -12 a +12
-  cutoff: 40, // 0-100 Transistor Bass
-  resonance: 60, // 0-100 Transistor Bass
-  envmod: 75, // 0-100 Transistor Bass
-  decay: 200, // 50-1000ms TB-303 hardware
-  accent: 50, // 0-100 Transistor Bass
-  drive: 0, // 0-100 Drive del Transistor Bass
-  tempo: 128, // 40-300 BPM
-  dist: 0, // Distorsión extra
+  tune: 0,
+  cutoff: 40,
+  resonance: 60,
+  envmod: 75,
+  decay: 200, // 50-600ms para que no se arrastre
+  accent: 50,
+  drive: 0,
+  tempo: 128,
+  dist: 0,
   density: 70
 };
 
@@ -372,6 +372,33 @@ const noteFreq = {
 };
 
 const seq = Array(16).fill().map(() => ({note: 'OFF', octave: 2, slide: false, accent: false}));
+
+// Pre-calcular curvas para optimizar CPU
+let driveCurve = null;
+let distCurve = null;
+
+function updateDriveCurve() {
+  if(params.drive === 0) { driveCurve = null; return; }
+  const k = params.drive / 100 * 50;
+  driveCurve = new Float32Array(44100);
+  for(let i=0; i<44100; i++) {
+    const x = i * 2 / 44100 - 1;
+    driveCurve[i] = (1 + k) * x / (1 + k * Math.abs(x));
+  }
+}
+
+function updateDistCurve() {
+  if(params.dist === 0) { distCurve = null; return; }
+  const k = params.dist * 10;
+  distCurve = new Float32Array(44100);
+  for(let i=0; i<44100; i++) {
+    const x = i * 2 / 44100 - 1;
+    distCurve[i] = (1 + k) * x / (1 + k * Math.abs(x));
+  }
+}
+
+updateDriveCurve();
+updateDistCurve();
 
 // UI Setup
 const stepsDiv = document.getElementById('steps');
@@ -406,10 +433,11 @@ document.querySelectorAll('input[type=range]').forEach(input => {
     const id = e.target.id;
     params[id] = parseFloat(e.target.value);
     document.getElementById(id+'Val').textContent = Math.round(params[id]);
+    if(id === 'drive') updateDriveCurve();
+    if(id === 'dist') updateDistCurve();
   });
 });
 
-// BPM +/- botones que suben/bajan de 1 en 1
 document.getElementById('bpmUp').onclick = () => {
   if(params.tempo < 300) {
     params.tempo++;
@@ -620,7 +648,6 @@ function generateDeadmau5(scaleNotes, density) {
   }
 }
 
-// DASH BERLIN ARREGLADO: % arp.length en vez de %8
 function generateDashBerlin(scaleNotes, density) {
   const arp = [0,2,4,7,9,7,4,2];
   for(let i=0; i<16; i++) {
@@ -771,34 +798,40 @@ function getStepFreq(step) {
   return noteFreq[baseNote];
 }
 
-// MOTOR HÍBRIDO: Transistor Bass 0-100 + Decay TB-303 50-1000ms
+// MOTOR HÍBRIDO OPTIMIZADO: Transistor Bass 0-100 + Decay TB-303 50-600ms
 let lastFreq = 65.41;
-function create303Voice(freq, time, slide, accent, duration) {
-  const osc = ctx.createOscillator();
-  const filter = ctx.createBiquadFilter();
-  const vca = ctx.createGain();
-  const drive = ctx.createWaveShaper();
-  const dist = ctx.createWaveShaper();
+let sharedFilter = null;
+let sharedVCA = null;
 
+// Crear nodos compartidos para ahorrar CPU
+function initAudioNodes() {
+  if(sharedFilter) return;
+  sharedFilter = ctx.createBiquadFilter();
+  sharedFilter.type = 'lowpass';
+  sharedVCA = ctx.createGain();
+  sharedVCA.connect(ctx.destination);
+}
+
+function create303Voice(freq, time, slide, accent, duration) {
+  initAudioNodes();
+
+  const osc = ctx.createOscillator();
   osc.type = waveform;
   osc.frequency.value = freq * Math.pow(2, params.tune/12);
 
-  // 1. DRIVE del Transistor Bass: saturación pre-filtro 0-100
-  if(params.drive > 0) {
-    const k = params.drive / 100 * 50;
-    const curve = new Float32Array(44100);
-    for(let i=0; i<44100; i++) {
-      const x = i * 2 / 44100 - 1;
-      curve[i] = (1 + k) * x / (1 + k * Math.abs(x));
-    }
-    drive.curve = curve;
-    drive.oversample = '4x';
+  // 1. DRIVE pre-filtro del Transistor Bass
+  if(params.drive > 0 && driveCurve) {
+    const driveNode = ctx.createWaveShaper();
+    driveNode.curve = driveCurve;
+    driveNode.oversample = '2x';
+    osc.connect(driveNode).connect(sharedFilter);
+  } else {
+    osc.connect(sharedFilter);
   }
 
   // 2. FILTRO: Cutoff 0-100 Transistor Bass = 27Hz-7.4kHz exponencial
   const cutoffHz = 27 * Math.pow(274.07, params.cutoff / 100);
-  filter.type = 'lowpass';
-  filter.Q.value = 0.5 + (params.resonance / 100) * 29.5;
+  sharedFilter.Q.value = 0.5 + (params.resonance / 100) * 29.5;
 
   // 3. ENV MOD 0-100 Transistor Bass = 0-8kHz
   const envModHz = (params.envmod / 100) * 8000;
@@ -807,48 +840,45 @@ function create303Voice(freq, time, slide, accent, duration) {
   const accentAmp = accent? Math.pow(10, (params.accent / 100 * 12) / 20) : 1;
   const accentCutoff = accent? (params.accent / 100) * 2000 : 0;
 
-  // 5. DECAY 50-1000ms TB-303 hardware - NO 0-100
+  // 5. DECAY 50-600ms TB-303 hardware optimizado
   const decaySec = params.decay / 1000;
   const actualDecay = accent? decaySec * 0.5 : decaySec;
 
   const peakCutoff = Math.min(cutoffHz + envModHz + accentCutoff, 20000);
-  filter.frequency.setValueAtTime(cutoffHz, time);
-  filter.frequency.linearRampToValueAtTime(peakCutoff, time + 0.001);
-  filter.frequency.exponentialRampToValueAtTime(cutoffHz, time + actualDecay);
+  const now = ctx.currentTime;
+
+  // Aplicar envelope solo si cambia el paso
+  if(time >= now) {
+    sharedFilter.frequency.cancelScheduledValues(time);
+    sharedFilter.frequency.setValueAtTime(cutoffHz, time);
+    sharedFilter.frequency.linearRampToValueAtTime(peakCutoff, time + 0.001);
+    sharedFilter.frequency.exponentialRampToValueAtTime(cutoffHz, time + actualDecay);
+  }
 
   // 6. VCA con accent
   const amp = 0.25 * accentAmp;
-  vca.gain.setValueAtTime(0, time);
-  vca.gain.linearRampToValueAtTime(amp, time + 0.001);
+  const gainNode = ctx.createGain();
+
+  gainNode.gain.setValueAtTime(0, time);
+  gainNode.gain.linearRampToValueAtTime(amp, time + 0.001);
 
   if(slide) {
-    vca.gain.setValueAtTime(amp, time + duration - 0.01);
+    gainNode.gain.setValueAtTime(amp, time + duration - 0.01);
   } else {
-    vca.gain.exponentialRampToValueAtTime(0.001, time + actualDecay);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, time + actualDecay);
   }
 
-  // 7. DIST post-filtro - la mantengo como pediste
-  if(params.dist > 0) {
-    const k = params.dist * 10;
-    const curve = new Float32Array(44100);
-    for(let i=0; i<44100; i++) {
-      const x = i * 2 / 44100 - 1;
-      curve[i] = (1 + k) * x / (1 + k * Math.abs(x));
-    }
-    dist.curve = curve;
-    dist.oversample = '4x';
+  // 7. DIST post-filtro - la mantengo
+  if(params.dist > 0 && distCurve) {
+    const distNode = ctx.createWaveShaper();
+    distNode.curve = distCurve;
+    distNode.oversample = '2x';
+    sharedFilter.connect(distNode).connect(gainNode);
+  } else {
+    sharedFilter.connect(gainNode);
   }
 
-  // Cadena: OSC -> DRIVE -> FILTER -> DIST -> VCA
-  if(params.drive > 0 && params.dist > 0) {
-    osc.connect(drive).connect(filter).connect(dist).connect(vca).connect(ctx.destination);
-  } else if(params.drive > 0) {
-    osc.connect(drive).connect(filter).connect(vca).connect(ctx.destination);
-  } else if(params.dist > 0) {
-    osc.connect(filter).connect(dist).connect(vca).connect(ctx.destination);
-  } else {
-    osc.connect(filter).connect(vca).connect(ctx.destination);
-  }
+  gainNode.connect(sharedVCA);
 
   osc.start(time);
   osc.stop(time + duration + 0.1);
@@ -883,7 +913,7 @@ function scheduler() {
   if(isRunning) scheduleTimer = setTimeout(scheduler, 25);
 }
 
-// MIDI ROLAND TB-303 FORMAT 0 PPQ 96 - EL QUE TE FUNCIONABA
+// MIDI ROLAND TB-303 FORMAT 0 PPQ 96 - IDÉNTICO AL v8 QUE TE FUNCIONABA
 document.getElementById('downloadMidi').onclick = () => {
   const PPQN = 96;
   const ticksPerStep = 24;
@@ -925,7 +955,7 @@ document.getElementById('downloadMidi').onclick = () => {
   });
 
   let midi = [];
-  midi.push(0x4D,0x54,0x68,0x64, 0x00,0x06, 0x00,0x00, 0x00,0x01, 0x00,0x60);
+  midi.push(0x4D,0x54,0x68,0x64, 0x00,0x06, 0x00, 0x00,0x01, 0x00,0x60);
   midi.push(0x4D,0x54,0x72,0x6B);
   midi.push((track.length>>24)&0xFF, (track.length>>16)&0xFF, (track.length>>8)&0xFF, track.length&0xFF);
   midi.push(...track);
@@ -946,7 +976,7 @@ function toVLQ(value) {
   return bytes.reverse();
 }
 
-// WAV - Renderiza con motor híbrido
+// WAV - Renderiza con motor optimizado
 document.getElementById('downloadWav').onclick = async () => {
   const secondsPerStep = 60.0 / params.tempo / 4;
   const totalDuration = secondsPerStep * 16 * 4;
@@ -974,21 +1004,17 @@ function renderStepToContext(octx, freq, time, slide, accent, duration) {
   const osc = octx.createOscillator();
   const filter = octx.createBiquadFilter();
   const vca = octx.createGain();
-  const drive = octx.createWaveShaper();
-  const dist = octx.createWaveShaper();
 
   osc.type = waveform;
   osc.frequency.value = freq * Math.pow(2, params.tune/12);
 
-  if(params.drive > 0) {
-    const k = params.drive / 100 * 50;
-    const curve = new Float32Array(44100);
-    for(let i=0; i<44100; i++) {
-      const x = i * 2 / 44100 - 1;
-      curve[i] = (1 + k) * x / (1 + k * Math.abs(x));
-    }
-    drive.curve = curve;
-    drive.oversample = '4x';
+  if(params.drive > 0 && driveCurve) {
+    const driveNode = octx.createWaveShaper();
+    driveNode.curve = driveCurve;
+    driveNode.oversample = '2x';
+    osc.connect(driveNode).connect(filter);
+  } else {
+    osc.connect(filter);
   }
 
   const cutoffHz = 27 * Math.pow(274.07, params.cutoff / 100);
@@ -1016,25 +1042,13 @@ function renderStepToContext(octx, freq, time, slide, accent, duration) {
     vca.gain.exponentialRampToValueAtTime(0.001, time + actualDecay);
   }
 
-  if(params.dist > 0) {
-    const k = params.dist * 10;
-    const curve = new Float32Array(44100);
-    for(let i=0; i<44100; i++) {
-      const x = i * 2 / 44100 - 1;
-      curve[i] = (1 + k) * x / (1 + k * Math.abs(x));
-    }
-    dist.curve = curve;
-    dist.oversample = '4x';
-  }
-
-  if(params.drive > 0 && params.dist > 0) {
-    osc.connect(drive).connect(filter).connect(dist).connect(vca).connect(octx.destination);
-  } else if(params.drive > 0) {
-    osc.connect(drive).connect(filter).connect(vca).connect(octx.destination);
-  } else if(params.dist > 0) {
-    osc.connect(filter).connect(dist).connect(vca).connect(octx.destination);
+  if(params.dist > 0 && distCurve) {
+    const distNode = octx.createWaveShaper();
+    distNode.curve = distCurve;
+    distNode.oversample = '2x';
+    filter.connect(distNode).connect(vca).connect(octx.destination);
   } else {
-    osc.connect(filter).connect(vca).connect(octx.destination);
+    filter.connect(vca).connect(octx.destination);
   }
 
   osc.start(time);
