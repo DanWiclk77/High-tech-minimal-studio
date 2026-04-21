@@ -2,48 +2,58 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>TB-303 Touch Clone</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TB-303 Touch Pro v3.0</title>
     <script src="https://unpkg.com/tone@14.7.77/build/Tone.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@magenta/music@1.23.1/es6/core.js"></script>
     <style>
-        *{box-sizing:border-box;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
-        body{font-family:'Arial',sans-serif;background:#B4B4B4;color:#111;margin:0;padding:8px;display:flex;justify-content:center;touch-action:manipulation}
-       .tb303{width:100%;max-width:950px;background:linear-gradient(180deg,#E2E2E2 0%,#C4C4C4 100%);border:4px solid #444;border-radius:4px;padding:12px;box-shadow:0 12px 40px #000a}
-       .panel{background:#D4D4D4;border:2px solid #555;padding:8px;margin-bottom:8px;border-radius:2px}
-       .header{display:flex;justify-content:space-between;align-items:flex-end;padding-bottom:8px;border-bottom:3px solid #333;margin-bottom:10px}
-       .logo{font-size:32px;font-weight:900;letter-spacing:-3px;font-family:'Arial Black',sans-serif}
-       .model{text-align:right;font-size:22px;font-weight:700;line-height:1}
-       .model-sub{font-size:9px;font-weight:400;letter-spacing:0.5px}
-       .top{display:grid;grid-template-columns:repeat(9,1fr);gap:8px;margin-bottom:10px;align-items:end}
-       .knob-box{text-align:center}.knob{width:52px;height:52px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#3A3A3A,#0A0A0A);border:3px solid #000;position:relative;cursor:ns-resize;margin:0 auto 3px;touch-action:none}
-       .knob::after{content:'';position:absolute;width:3px;height:18px;background:#E8E8E8;top:4px;left:50%;transform:translateX(-50%);transform-origin:50% 22px;border-radius:1px;box-shadow:0 0 2px #000}
-       .knob-lab{font-size:7px;font-weight:900;line-height:1;letter-spacing:0.3px}.knob-val{font-size:9px;font-weight:700;margin-top:1px;color:#000}
-       .switch{width:60px;height:60px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#4A4A4A,#1A1A1A);border:3px solid #000;position:relative;cursor:pointer}
-       .switch::after{content:'';position:absolute;width:4px;height:20px;background:#FFF;top:6px;left:50%;transform:translateX(-50%);transform-origin:50% 24px;border-radius:2px}
-       .seq-panel{background:#C0C0C0;border:2px solid #555;padding:10px;border-radius:2px}
-       .display{background:#001A00;color:#00FF00;font-family:'Courier New',monospace;padding:8px;text-align:center;font-size:13px;border:3px inset #333;margin-bottom:10px;letter-spacing:2px;font-weight:700}
-       .pattern-row{display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap}
-       .pattern-row label{font-size:10px;font-weight:900}.pattern-row select{background:#B0B0B0;border:2px solid #555;padding:4px;font-weight:700;font-size:11px}
-       .step-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:4px;margin-bottom:8px}
-       .step-editor{background:#B8B8B8;border:2px solid #555;padding:6px;border-radius:2px}
-       .step-editor.current{border-color:#00FF00;box-shadow:0 0 8px #0F0}
-       .step-num{font-size:10px;font-weight:900;text-align:center;margin-bottom:4px;background:#999;color:#000;padding:2px}
-       .note-select{width:100%;background:#D0D0D0;border:1px solid #666;padding:3px;font-size:11px;font-weight:700;margin-bottom:3px;text-align:center}
-       .oct-btns{display:flex;gap:2px;margin-bottom:3px}
-       .oct-btn{flex:1;background:#888;border:1px solid #555;padding:4px;font-size:10px;font-weight:900;cursor:pointer}
-       .oct-btn:active{background:#666}
-       .attr-btns{display:flex;gap:2px}
-       .attr-btn{flex:1;background:#999;border:1px solid #666;padding:6px;font-size:8px;font-weight:900;cursor:pointer;text-align:center}
-       .attr-btn.on{background:#FF0099;color:#000}.attr-btn.rest.on{background:#555;color:#FFF}
-       .led{width:8px;height:8px;border-radius:50%;background:#400;margin:2px auto;box-shadow:inset 0 0 3px #000}
-       .led.on{background:#FF0000;box-shadow:0 0 10px #F00,0 0 4px #F00 inset}
-       .controls{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:12px}
-       .btn{padding:16px 8px;background:#2A2A2A;color:#FFF;border:3px solid #111;border-radius:2px;font-weight:900;cursor:pointer;font-size:11px;text-align:center;letter-spacing:0.5px}
-       .btn:active{background:#444;transform:translateY(1px)}.btn.run{background:#0A5A0A}.btn.stop{background:#5A0A0A}.btn.write{background:#0A0A5A}.btn.write.active{background:#0A8A0A}
-       .btn.rec{background:#5A0000}.btn.rec.recording{background:#FF0000;animation:blink 0.5s infinite}
-        @keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
-       .labels{display:flex;justify-content:space-between;font-size:7px;font-weight:900;color:#333;margin-top:2px}
+        *{box-sizing:border-box;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
+        html,body{margin:0;padding:0;background:#A8A8A8;overflow-x:hidden;touch-action:manipulation}
+       .tb303{width:100%;max-width:1000px;margin:8px auto;background:linear-gradient(180deg,#E8E8E8 0%,#C0C0C0 100%);border:5px solid #333;border-radius:4px;padding:12px;box-shadow:0 8px 30px #0009;overflow:hidden}
+       .panel{background:#D8D8D8;border:3px solid #444;padding:10px;margin-bottom:10px;border-radius:2px}
+       .header{display:flex;justify-content:space-between;align-items:flex-end;padding-bottom:10px;border-bottom:4px solid #222;margin-bottom:14px}
+       .logo{font-size:36px;font-weight:900;letter-spacing:-3px;font-family:'Arial Black',sans-serif}
+       .model{text-align:right;font-size:24px;font-weight:700;line-height:1}
+       .model-sub{font-size:9px;font-weight:400;letter-spacing:0.8px}
+       .top{display:grid;grid-template-columns:repeat(9,1fr);gap:16px;margin-bottom:14px;align-items:end}
+       .knob-box{text-align:center}
+       .knob{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#333,#000);border:4px solid #000;position:relative;cursor:ns-resize;margin:0 auto 4px;touch-action:none;box-shadow:0 3px 8px #0006,inset 0 2px 4px #666}
+       .knob::after{content:'';position:absolute;width:4px;height:22px;background:#F0F0F0;top:5px;left:50%;transform:translateX(-50%);transform-origin:50% 27px;border-radius:2px;box-shadow:0 0 3px #000}
+       .knob-lab{font-size:8px;font-weight:900;line-height:1.1;letter-spacing:0.5px;height:18px;display:flex;align-items:center;justify-content:center}
+       .knob-val{font-size:10px;font-weight:700;margin-top:2px;color:#000;background:#B0B0B0;padding:1px 4px;border-radius:2px;display:inline-block;min-width:35px}
+       .switch{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#444,#111);border:4px solid #000;position:relative;cursor:pointer;box-shadow:0 3px 8px #0006}
+       .switch::after{content:'';position:absolute;width:5px;height:24px;background:#FFF;top:6px;left:50%;transform:translateX(-50%);transform-origin:50% 26px;border-radius:2px}
+       .seq-panel{background:#C8C8C8;border:3px solid #444;padding:12px;border-radius:2px}
+       .display{background:#001A00;color:#00FF00;font-family:'Courier New',monospace;padding:10px;text-align:center;font-size:14px;border:4px inset #222;margin-bottom:12px;letter-spacing:3px;font-weight:700;text-shadow:0 0 8px #0F0}
+       .controls-top{display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+       .controls-top label{font-size:11px;font-weight:900}
+       .controls-top select{background:#A8A8A8;border:2px solid #444;padding:6px;font-weight:700;font-size:12px}
+       .step-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
+       .step-editor{background:#B0B0B0;border:3px solid #444;padding:8px;border-radius:3px;position:relative}
+       .step-editor.current{border-color:#00FF00;box-shadow:0 0 12px #0F0, inset 0 0 8px #0F03;background:#C0C0C0}
+       .step-editor.playing{animation:pulse 0.1s}
+        @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.02)}}
+       .step-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+       .step-num{font-size:12px;font-weight:900;background:#222;color:#FFF;padding:2px 6px;border-radius:2px}
+       .led{width:10px;height:10px;border-radius:50%;background:#300;box-shadow:inset 0 0 4px #000;border:1px solid #111}
+       .led.on{background:#FF0000;box-shadow:0 0 12px #F00,0 0 6px #F00 inset}
+       .note-select{width:100%;background:#D8D8D8;border:2px solid #555;padding:6px;font-size:13px;font-weight:700;margin-bottom:6px;text-align:center;cursor:pointer}
+       .oct-row{display:flex;gap:4px;margin-bottom:6px}
+       .oct-btn{flex:1;background:#777;border:2px solid #444;padding:8px;font-size:11px;font-weight:900;cursor:pointer;text-align:center;color:#FFF}
+       .oct-btn:active{background:#555;transform:translateY(1px)}
+       .attr-row{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
+       .attr-btn{background:#888;border:2px solid #555;padding:10px 4px;font-size:9px;font-weight:900;cursor:pointer;text-align:center;color:#FFF;border-radius:2px}
+       .attr-btn.on{background:#FF0099;color:#000;border-color:#CC0077;box-shadow:inset 0 2px 4px #0003}
+       .attr-btn.rest.on{background:#444;color:#FFF}
+       .attr-btn:active{transform:translateY(1px)}
+       .main-controls{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:14px}
+       .btn{padding:18px 8px;background:#1A1A1A;color:#FFF;border:3px solid #000;border-radius:3px;font-weight:900;cursor:pointer;font-size:12px;text-align:center;letter-spacing:1px;box-shadow:0 4px 0 #000,inset 0 1px 0 #444}
+       .btn:active{background:#333;transform:translateY(2px);box-shadow:0 2px 0 #000,inset 0 1px 0 #444}
+       .btn.run{background:#0A4A0A;border-color:#063006}.btn.stop{background:#4A0A0A;border-color:#300606}
+       .btn.rand-pattern{background:#4A0A4A;border-color:#300630}.btn.rand-sound{background:#4A3A0A;border-color:#302506}
+       .btn.rec{background:#4A0000;border-color:#300000}.btn.rec.recording{background:#FF0000;animation:blink 0.6s infinite}
+        @keyframes blink{0%,100%{opacity:1}50%{opacity:0.4}}
+       .info{font-size:9px;color:#222;margin-top:10px;line-height:1.4;font-weight:600}
     </style>
 </head>
 <body>
@@ -64,38 +74,36 @@
                 <div class="knob-box"><div class="knob" id="tempo" data-min="40" data-max="300" data-val="126"></div><div class="knob-lab">TEMPO</div><div class="knob-val" id="tempo-val">126</div></div>
                 <div class="knob-box"><div class="knob" id="volume" data-min="0" data-max="1" data-val="0.8"></div><div class="knob-lab">VOLUME</div><div class="knob-val" id="volume-val">80%</div></div>
             </div>
-            <div class="labels"><span>SLOW</span><span>FAST</span></div>
         </div>
 
         <div class="seq-panel">
             <div class="display" id="display">STOP | PATTERN 1 | STEP 01</div>
-            <div class="pattern-row">
+            <div class="controls-top">
                 <label>PATTERN:</label>
                 <select id="pattern-select"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option></select>
-                <label>MODE:</label>
-                <select id="mode-select"><option value="play">PLAY</option><option value="write">WRITE</option></select>
                 <label>BARS:</label>
-                <select id="bars-select"><option value="1">1</option><option value="2">2</option><option value="4">4</option><option value="8">8</option></select>
+                <select id="bars-select"><option value="1">1</option><option value="2">2</option><option value="4" selected>4</option><option value="8">8</option></select>
             </div>
             <div class="step-grid" id="step-grid"></div>
-            <div class="controls">
-                <div class="btn write" id="write-btn">WRITE</div>
+            <div class="main-controls">
                 <div class="btn run" id="run-btn">RUN/STOP</div>
                 <div class="btn" id="clear-btn">CLEAR</div>
+                <div class="btn rand-pattern" id="rand-pattern-btn">RANDOM<br>PATTERN</div>
+                <div class="btn rand-sound" id="rand-sound-btn">RANDOM<br>SOUND</div>
                 <div class="btn" id="copy-btn">COPY</div>
                 <div class="btn" id="paste-btn">PASTE</div>
-                <div class="btn" id="rand-btn">RANDOM</div>
                 <div class="btn rec" id="wav-btn">REC WAV</div>
                 <div class="btn" id="midi-btn">SAVE MIDI</div>
             </div>
+            <div class="info">TOUCH: Arrastra perillas arriba/abajo. Edita cualquier paso mientras suena. RANDOM PATTERN cambia notas. RANDOM SOUND cambia cutoff/reso estilo Boris Brejcha.</div>
         </div>
     </div>
 
 <script>
 'use strict';
 const TB303 = (function(){
-    let ctx,synth,isPlaying=false,isRecording=false,writeMode=false;
-    let currentStep=0,currentPattern=1,selectedStep=0,clipboard=null;
+    let ctx,synth,isPlaying=false,isRecording=false;
+    let currentStep=0,currentPattern=1,clipboard=null;
     let patterns={1:[],2:[],3:[],4:[]},loop,recorder;
 
     const params={tuning:0,cutoff:800,resonance:5,envmod:2000,decay:0.3,accent:0.5,volume:0.8,tempo:126,waveform:'sawtooth'};
@@ -106,12 +114,12 @@ const TB303 = (function(){
         for(let p=1;p<=4;p++){
             patterns[p]=Array(16).fill().map(()=>({note:'C2',accent:false,slide:false,active:false,rest:false}));
         }
-        const saved=localStorage.getItem('tb303_patterns_v2');
+        const saved=localStorage.getItem('tb303_v3_patterns');
         if(saved)patterns=JSON.parse(saved);
     }
 
     function savePatterns(){
-        localStorage.setItem('tb303_patterns_v2',JSON.stringify(patterns));
+        localStorage.setItem('tb303_v3_patterns',JSON.stringify(patterns));
     }
 
     function setupAudio(){
@@ -146,27 +154,32 @@ const TB303 = (function(){
             const max=parseFloat(knob.dataset.max);
             updateKnobRotation(knob,params[id],min,max);
 
-            let startY=0,startVal=0;
+            let startY=0,startVal=0,active=false;
             const onStart=(e)=>{
-                const y=e.touches?e.touches[0].clientY:e.clientY;
-                startY=y;startVal=params[id];
+                active=true;
+                startY=e.touches?e.touches[0].clientY:e.clientY;
+                startVal=params[id];
                 e.preventDefault();
             };
             const onMove=(e)=>{
-                if(e.buttons===0&&!e.touches)return;
+                if(!active)return;
                 const y=e.touches?e.touches[0].clientY:e.clientY;
                 const dy=startY-y;
                 const range=max-min;
-                params[id]=Math.max(min,Math.min(max,startVal+dy*0.008*range));
+                params[id]=Math.max(min,Math.min(max,startVal+dy*0.006*range));
                 updateKnobRotation(knob,params[id],min,max);
                 updateDisplay();
                 updateSynth();
+                e.preventDefault();
             };
+            const onEnd=()=>{active=false};
 
             knob.addEventListener('mousedown',onStart);
             knob.addEventListener('touchstart',onStart,{passive:false});
             document.addEventListener('mousemove',onMove);
             document.addEventListener('touchmove',onMove,{passive:false});
+            document.addEventListener('mouseup',onEnd);
+            document.addEventListener('touchend',onEnd);
         });
 
         document.getElementById('waveform').onclick=function(){
@@ -194,7 +207,7 @@ const TB303 = (function(){
         document.getElementById('tempo-val').textContent=Math.round(params.tempo);
 
         const mode=isPlaying?'RUN':'STOP';
-        document.getElementById('display').textContent=mode+' | PATTERN '+currentPattern+' | STEP '+(selectedStep+1).toString().padStart(2,'0');
+        document.getElementById('display').textContent=mode+' | PATTERN '+currentPattern+' | STEP '+(currentStep+1).toString().padStart(2,'0');
     }
 
     function setupStepEditor(){
@@ -206,22 +219,23 @@ const TB303 = (function(){
             div.className='step-editor';
             div.id='step-'+i;
             div.innerHTML=`
-                <div class="step-num">${i+1}</div>
-                <div class="led" id="led-${i}"></div>
+                <div class="step-header">
+                    <div class="step-num">${i+1}</div>
+                    <div class="led" id="led-${i}"></div>
+                </div>
                 <select class="note-select" data-step="${i}">
                     ${notes.map(n=>octaves.map(o=>`<option value="${n}${o}" ${step.note===n+o?'selected':''}>${n}${o}</option>`).join('')).join('')}
                 </select>
-                <div class="oct-btns">
+                <div class="oct-row">
                     <div class="oct-btn" onclick="TB303.changeOct(${i},1)">OCT+</div>
                     <div class="oct-btn" onclick="TB303.changeOct(${i},-1)">OCT-</div>
                 </div>
-                <div class="attr-btns">
+                <div class="attr-row">
                     <div class="attr-btn ${step.slide?'on':''}" onclick="TB303.toggleAttr(${i},'slide')">SLIDE</div>
                     <div class="attr-btn ${step.accent?'on':''}" onclick="TB303.toggleAttr(${i},'accent')">ACCENT</div>
                     <div class="attr-btn rest ${step.rest?'on':''}" onclick="TB303.toggleAttr(${i},'rest')">REST</div>
                 </div>
             `;
-            div.onclick=()=>selectStep(i);
             grid.appendChild(div);
         }
 
@@ -231,7 +245,7 @@ const TB303 = (function(){
                 patterns[currentPattern].note=e.target.value;
                 patterns[currentPattern].active=true;
                 savePatterns();
-                updateStepDisplay(step);
+                updateStepLED(step);
             };
         });
         updateAllSteps();
@@ -246,39 +260,29 @@ const TB303 = (function(){
         p.note=m[1]+oct;
         p.active=true;
         savePatterns();
-        updateStepDisplay(step);
+        setupStepEditor();
     }
 
     function toggleAttr(step,attr){
         const p=patterns[currentPattern];
-        p[attr]=!p[attr];
+        p=!p;
         if(attr==='rest'&&p.rest){p.active=false;}
         else if(attr==='rest'&&!p.rest){p.active=true;}
         savePatterns();
-        updateStepDisplay(step);
+        setupStepEditor();
     }
 
-    function selectStep(step){
-        selectedStep=step;
-        document.querySelectorAll('.step-editor').forEach((el,i)=>el.classList.toggle('current',i===step));
-        updateDisplay();
-    }
-
-    function updateStepDisplay(step){
-        if(step===undefined){updateAllSteps();return}
+    function updateStepLED(step){
         const p=patterns[currentPattern];
-        const el=document.getElementById('step-'+step);
-        el.querySelector('.note-select').value=p.note;
-        el.querySelectorAll('.attr-btn')[0].classList.toggle('on',p.slide);
-        el.querySelectorAll('.attr-btn')[1].classList.toggle('on',p.accent);
-        el.querySelectorAll('.attr-btn')[2].classList.toggle('on',p.rest);
-        el.querySelector('.led').classList.toggle('on',p.active&&!p.rest);
+        document.getElementById('led-'+step).classList.toggle('on',p.active&&!p.rest);
     }
 
     function updateAllSteps(){
-        for(let i=0;i<16;i++)updateStepDisplay(i);
-        document.querySelectorAll('.step-editor').forEach((el,i)=>el.classList.toggle('current',i===selectedStep));
-        if(isPlaying)document.getElementById('step-'+currentStep)?.classList.add('current');
+        for(let i=0;i<16;i++){
+            const el=document.getElementById('step-'+i);
+            if(el)el.classList.toggle('current',i===currentStep);
+            updateStepLED(i);
+        }
     }
 
     async function toggleRun(){
@@ -296,6 +300,7 @@ const TB303 = (function(){
                 playStep(currentStep,time);
                 currentStep=(currentStep+1)%16;
                 updateAllSteps();
+                updateDisplay();
             },'16n').start(0);
             Tone.Transport.start();
             isPlaying=true;
@@ -322,7 +327,7 @@ const TB303 = (function(){
         await Tone.start();
         const bars=parseInt(document.getElementById('bars-select').value);
         const duration=(60/params.tempo)*4*bars;
-        const rec=recorder.start();
+        recorder.start();
         isRecording=true;
         document.getElementById('wav-btn').textContent='RECORDING...';
         document.getElementById('wav-btn').classList.add('recording');
@@ -340,7 +345,7 @@ const TB303 = (function(){
             const blob=await recorder.stop();
             const url=URL.createObjectURL(blob);
             const a=document.createElement('a');
-            a.href=url;a.download='tb303_pattern'+currentPattern+'_'+params.tempo+'bpm.wav';a.click();
+            a.href=url;a.download='tb303_p'+currentPattern+'_'+params.tempo+'bpm.wav';a.click();
             isRecording=false;
             document.getElementById('wav-btn').textContent='REC WAV';
             document.getElementById('wav-btn').classList.remove('recording');
@@ -386,10 +391,10 @@ const TB303 = (function(){
         patterns[currentPattern]=[];
         for(let i=0;i<16;i++){
             patterns[currentPattern].push({
-                note:scale[Math.floor(Math.random()*scale.length)]+(Math.random()<0.3?'1':'2'),
+                note:scale[Math.floor(Math.random()*scale.length)]+(Math.random()<0.4?'1':'2'),
                 accent:Math.random()<0.2,
                 slide:Math.random()<0.3,
-                active:Math.random()<0.65,
+                active:Math.random()<0.7,
                 rest:Math.random()<0.15
             });
         }
@@ -397,20 +402,36 @@ const TB303 = (function(){
         setupStepEditor();
     }
 
-    document.getElementById('write-btn').onclick=function(){
-        writeMode=!writeMode;
-        this.classList.toggle('active',writeMode);
-        document.getElementById('mode-select').value=writeMode?'write':'play';
-    };
+    function randomSound(){
+        // Estilo Boris Brejcha: ácido, resonante, cutoff bajo con env mod alto
+        params.cutoff=200+Math.random()*1000; // 200-1200 Hz
+        params.resonance=8+Math.random()*12; // 8-20 muy resonante
+        params.envmod=3000+Math.random()*5000; // 3000-8000 mucho env
+        params.decay=0.1+Math.random()*0.4; // 0.1-0.5 corto
+        params.accent=0.6+Math.random()*0.4; // 0.6-1.0 fuerte
+        params.waveform=Math.random()<0.7?'sawtooth':'square';
+
+        ['cutoff','resonance','envmod','decay','accent'].forEach(id=>{
+            const knob=document.getElementById(id);
+            const min=parseFloat(knob.dataset.min);
+            const max=parseFloat(knob.dataset.max);
+            updateKnobRotation(knob,params[id],min,max);
+        });
+        document.getElementById('waveform').style.transform=params.waveform==='sawtooth'?'rotate(-45deg)':'rotate(45deg)';
+        document.getElementById('waveform-val').textContent=params.waveform==='sawtooth'?'SAW':'SQR';
+        updateDisplay();
+        updateSynth();
+    }
+
     document.getElementById('run-btn').onclick=toggleRun;
     document.getElementById('clear-btn').onclick=clearPattern;
     document.getElementById('copy-btn').onclick=copyPattern;
     document.getElementById('paste-btn').onclick=pastePattern;
-    document.getElementById('rand-btn').onclick=randomPattern;
+    document.getElementById('rand-pattern-btn').onclick=randomPattern;
+    document.getElementById('rand-sound-btn').onclick=randomSound;
     document.getElementById('wav-btn').onclick=recordWAV;
     document.getElementById('midi-btn').onclick=saveMIDI;
     document.getElementById('pattern-select').onchange=e=>{currentPattern=parseInt(e.target.value);setupStepEditor();updateDisplay()};
-    document.getElementById('mode-select').onchange=e=>{writeMode=e.target.value==='write';document.getElementById('write-btn').classList.toggle('active',writeMode)};
     document.getElementById('bars-select').onchange=()=>{};
 
     initPatterns();
