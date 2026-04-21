@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#0A0A0A"/>
-    <title>FXT Studio AI v5.1</title>
+    <title>FXT Studio AI v5.2</title>
     <link rel="manifest" href='data:application/json,{"name":"FXT Studio AI","short_name":"FXT","start_url":".","display":"standalone","background_color":"#0A0A0A","theme_color":"#0A0A0A","icons":[{"src":"https://via.placeholder.com/512/0A/EAEAEA?text=FXT","sizes":"512x512"}]}'>
     <script src="https://unpkg.com/tone@14.7.77/build/Tone.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@magenta/music@1.23.1/es6/core.js"></script>
@@ -31,7 +31,7 @@
     </style>
 </head>
 <body>
-    <h1>FXT Studio AI v5.1 <span class="badge">PRO</span></h1>
+    <h1>FXT Studio AI v5.2 <span class="badge">PRO</span></h1>
     <div id="log">Iniciando...</div>
     <div class="agent">
         <label>OpenAI API Key - requerida para que los agentes generen</label>
@@ -41,22 +41,15 @@
         <div class="col"><label>BPM</label><input id="bpm" type="number" value="126"></div>
         <div class="col"><label>Tonalidad</label>
             <select id="key">
-                <option>C major</option><option>C minor</option>
-                <option>C# major</option><option>C# minor</option>
-                <option>D major</option><option>D minor</option>
-                <option>D# major</option><option>D# minor</option>
-                <option>E major</option><option>E minor</option>
-                <option>F major</option><option>F minor</option>
-                <option>F# major</option><option>F# minor</option>
-                <option>G major</option><option>G minor</option>
-                <option>G# major</option><option>G# minor</option>
-                <option>A major</option><option>A minor</option>
-                <option>A# major</option><option>A# minor</option>
-                <option>B major</option><option>B minor</option>
+                <option>C major</option><option>C minor</option><option>C# major</option><option>C# minor</option>
+                <option>D major</option><option>D minor</option><option>D# major</option><option>D# minor</option>
+                <option>E major</option><option>E minor</option><option>F major</option><option>F minor</option>
+                <option>F# major</option><option>F# minor</option><option>G major</option><option>G minor</option>
+                <option>G# major</option><option>G# minor</option><option>A major</option><option>A minor</option>
+                <option>A# major</option><option>A# minor</option><option>B major</option><option>B minor</option>
             </select>
         </div>
     </div>
-
     <div class="agent">
         <h2>1. Producer FXT <span class="status" id="prod-status"></span></h2>
         <div class="chat" id="prod-chatbox">
@@ -69,7 +62,6 @@
         <button onclick="App.runProducer()">Generar Stems</button>
         <div id="prod-files"></div>
     </div>
-
     <div class="agent">
         <h2>2. Mix Engineer <span class="status" id="mix-status"></span></h2>
         <div class="chat" id="mix-chatbox">
@@ -82,7 +74,6 @@
         <button id="mix-btn" onclick="App.runMixer()" disabled>Mezclar Stems</button>
         <div id="mix-files"></div>
     </div>
-
     <div class="agent">
         <h2>3. Mastering Engineer <span class="status" id="mast-status"></span></h2>
         <div class="chat" id="mast-chatbox">
@@ -95,10 +86,9 @@
         <button id="mast-btn" onclick="App.runMastering()" disabled>Masterizar 5 Plataformas</button>
         <div id="mast-files"></div>
     </div>
-
 <script>
 'use strict';
-document.title='FXT v5.1 OK';
+document.title='FXT v5.2 OK';
 const App = (function(){
     const logEl = document.getElementById('log');
     function log(msg, err=false){
@@ -107,7 +97,7 @@ const App = (function(){
         logEl.scrollTop = logEl.scrollHeight;
     }
     window.onerror = function(m,s,ln,col){log('ERROR JS línea '+ln+': '+m,true);updateStatus('prod-status','❌ Error JS');return true};
-    log('1. Script v5.1 iniciado');
+    log('1. Script v5.2 iniciado');
 
     document.getElementById('apikey').value=localStorage.getItem('OPENAI_KEY')||'';
     log('2. DOM listo');
@@ -246,7 +236,7 @@ const App = (function(){
             }catch(e){log('Error MIDI: '+e,true);return new Blob()}
         },
         noteToMidi(n){
-            const notes=['C','C#','D','D#','E','F#','G#','A','A#','B'];
+            const notes=['C','C#','D','D#','E','F#','G','G#','A','A#','B'];
             const m=n.match(/([A-G]#?)(\d)/);
             return notes.indexOf(m[1])+(parseInt(m[2])+1)*12;
         }
