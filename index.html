@@ -3,39 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#0A0A0A"/>
-    <title>FXT Studio AI v6.0 - Producer</title>
+    <title>FXT Studio AI v6.1 - Producer</title>
     <script src="https://unpkg.com/tone@14.7.77/build/Tone.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@magenta/music@1.23.1/es6/core.js"></script>
     <style>
         *{box-sizing:border-box}body{font-family:system-ui;background:#0A0A0A;color:#EAEAEA;margin:0;padding:12px}
         h1{font-size:18px;margin:0 0 12px 0}.row{display:flex;gap:8px;margin-bottom:12px}
-       .agent{background:#1A1A1A;border:1px solid #333;border-radius:12px;padding:12px;margin-bottom:12px}
-       .agent h2{margin:0 0 8px 0;font-size:15px;display:flex;justify-content:space-between;align-items:center}
+.agent{background:#1A1A1A;border:1px solid #333;border-radius:12px;padding:12px;margin-bottom:12px}
+.agent h2{margin:0 0 8px 0;font-size:15px;display:flex;justify-content:space-between;align-items:center}
         button{background:#EAEAEA;color:#0A0A0A;border:none;padding:10px 14px;border-radius:8px;font-weight:600;width:100%;margin-top:8px;cursor:pointer;font-size:14px}
         button:disabled{background:#333;color:#666;cursor:not-allowed}
-       .file{background:#252525;padding:6px 8px;border-radius:6px;margin:4px 0;font-size:11px;display:flex;justify-content:space-between;align-items:center}
-       .status{color:#00FF88;font-size:11px}.error{color:#FF4444;font-size:11px}
+.file{background:#252525;padding:6px 8px;border-radius:6px;margin:4px 0;font-size:11px;display:flex;justify-content:space-between;align-items:center}
+.status{color:#00FF88;font-size:11px}.error{color:#FF4444;font-size:11px}
         input,select{background:#252525;border:1px solid #333;color:#EAEAEA;padding:8px;border-radius:6px;width:100%;font-size:14px}
         label{font-size:11px;color:#999;display:block;margin-bottom:4px}.col{flex:1}
-        #log{background:#000;padding:8px;border-radius:6px;font-size:9px;color:#0F0;height:160px;overflow:auto;margin-top:8px;white-space:pre-wrap}
-       .chat{border:1px solid #333;border-radius:8px;padding:8px;margin:8px 0;max-height:150px;overflow:auto;background:#111}
-       .chat-msg{font-size:11px;margin:4px 0;padding:4px;border-radius:4px}
-       .chat-user{background:#252525;text-align:right;color:#8FF}
-       .chat-ai{background:#1A1A1A;color:#EAEAEA}
-       .chat-box{display:flex;gap:4px;margin-top:4px}
-       .chat-box input{flex:1;padding:6px;font-size:12px}
-       .chat-box button{width:auto;padding:6px 10px;margin:0;font-size:12px}
-       .badge{background:#00FF88;color:#000;font-size:9px;padding:2px 6px;border-radius:4px;font-weight:700}
+        #log{background:#000;padding:8px;border-radius:6px;font-size:9px;color:#0F0;height:180px;overflow:auto;margin-top:8px;white-space:pre-wrap}
+.badge{background:#00FF88;color:#000;font-size:9px;padding:2px 6px;border-radius:4px;font-weight:700}
     </style>
 </head>
 <body>
-    <h1>FXT Studio AI v6.0 <span class="badge">PRODUCER</span></h1>
+    <h1>FXT Studio AI v6.1 <span class="badge">PRODUCER</span></h1>
     <div id="log">Iniciando...</div>
-    <div class="agent">
-        <label>OpenAI API Key - opcional, solo si quieres que la IA componga</label>
-        <input id="apikey" type="password" placeholder="sk-proj-..." onchange="localStorage.setItem('OPENAI_KEY', this.value)">
-    </div>
     <div class="row">
         <div class="col"><label>BPM</label><input id="bpm" type="number" value="126"></div>
         <div class="col"><label>Tonalidad</label>
@@ -48,34 +36,24 @@
                 <option>A# major</option><option>A# minor</option><option>B major</option><option>B minor</option>
             </select>
         </div>
-    </div>
     <div class="agent">
         <h2>Producer FXT <span class="status" id="prod-status"></span></h2>
-        <div class="chat" id="prod-chatbox">
-            <div class="chat-msg chat-ai">Dime qué quieres: "bassline + acordes i-VI-iv-V + arpegio + melodía lead en F minor, 8 compases". Si no pones API Key uso patrones default.</div>
-        </div>
-        <div class="chat-box">
-            <input id="prod-input" placeholder="Ej: bassline, acordes, arpegio y melodía en F minor">
-            <button onclick="App.chatProducer()">Enviar</button>
-        </div>
+        <label>Genera: Kick + Bass + Acordes + Arpegio + Melodía Lead</label>
         <button onclick="App.runProducer()">Generar Stems</button>
         <div id="prod-files"></div>
     </div>
 <script>
 'use strict';
-document.title='FXT v6.0 OK';
+document.title='FXT v6.1 OK';
 const App = (function(){
     const logEl = document.getElementById('log');
-    function log(msg, err=false){
+    function log(msg, err){
         const time = new Date().toLocaleTimeString();
         logEl.innerHTML += '\n' + time + ': ' + (err?'<span style="color:#F44">':'') + msg + (err?'</span>':'');
         logEl.scrollTop = logEl.scrollHeight;
     }
     window.onerror = function(m,s,ln){log('ERROR JS línea '+ln+': '+m,true);updateStatus('prod-status','❌ Error JS');return true};
-    log('1. Script v6.0 iniciado');
-
-    document.getElementById('apikey').value=localStorage.getItem('OPENAI_KEY')||'';
-    log('2. DOM listo');
+    log('1. Script v6.1 iniciado');
 
     const Scales={
         'C major':['C','D','E','F','G','A','B'],'C minor':['C','D','Eb','F','G','Ab','Bb'],
@@ -91,26 +69,10 @@ const App = (function(){
         'A# major':['A#','C','D','D#','F','G','A'],'A# minor':['A#','C','C#','D#','F#','G#'],
         'B major':['B','C#','D#','E','F#','G#','A#'],'B minor':['B','C#','D','E','F#','G','A']
     };
-    log('3. 24 escalas cargadas');
-
-    let project = {stems:[],midi:[],producerObjective:null};
+    log('2. 24 escalas cargadas');
 
     function updateStatus(id,t){const el=document.getElementById(id);if(el){el.textContent=t;el.className=t.includes('❌')?'error':'status'}}
-    function addChatMsg(role,text){const box=document.getElementById('prod-chatbox');const div=document.createElement('div');div.className='chat-msg chat-'+role;div.textContent=text;box.appendChild(div);box.scrollTop=box.scrollHeight}
     function renderFiles(files){document.getElementById('prod-files').innerHTML=files.map(function(f){return '<div class="file"><span>'+f.name+'</span><a href="'+f.url+'" download="'+f.name+'">Descargar</a></div>'}).join('')}
-
-    async function askAI(systemPrompt,userPrompt){
-        const key=localStorage.getItem('OPENAI_KEY');
-        if(!key)throw new Error('Sin API Key, usando patrón default');
-        const res=await fetch('https://api.openai.com/v1/chat/completions',{
-            method:'POST',
-            headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
-            body:JSON.stringify({model:'gpt-4o-mini',messages:[{role:'system',content:systemPrompt},{role:'user',content:userPrompt}],temperature:0.7,max_tokens:800,response_format:{type:'json_object'}})
-        });
-        const data=await res.json();
-        if(data.error)throw new Error(data.error.message);
-        return JSON.parse(data.choices[0].message.content);
-    }
 
     const DSP = {
         bufferToWav:function(buf){
@@ -205,30 +167,6 @@ const App = (function(){
         }
     };
 
-    async function chatProducer(){
-        try{
-            const input=document.getElementById('prod-input');
-            const userMsg=input.value.trim();
-            if(!userMsg)return;
-            addChatMsg('user',userMsg);
-            input.value='';
-            const systemPrompt='Eres Producer FXT de Melodic Techno. Responde SOLO un JSON: {"bassline":[{"step":0-15,"note":"F1","slide":true,"accent":false}],"chords":[{"step":0,"notes":["F3","Ab3","C4"],"duration":4}],"arp":[{"step":0,"note":"F4","duration":0.25}],"melody":[{"step":0,"note":"C5","duration":1}]}. Steps 0-15 = 1 compás. duration en beats. Si no pide algo, no lo incluyas. Respeta la tonalidad.';
-            const key=document.getElementById('key').value;
-            const bpm=document.getElementById('bpm').value;
-            const fullPrompt='Tonalidad: '+key+', BPM: '+bpm+'. Instrucción: '+userMsg;
-            addChatMsg('ai','Generando con IA...');
-            const reply=await askAI(systemPrompt,fullPrompt);
-            document.getElementById('prod-chatbox').lastChild.remove();
-            addChatMsg('ai','Listo. JSON guardado. Toca Generar Stems.');
-            project.producerObjective=reply;
-            log('Objetivo IA guardado');
-        }catch(e){
-            document.getElementById('prod-chatbox').lastChild.remove();
-            addChatMsg('ai','Sin API Key. Usaré patrón default.');
-            log('Sin API Key: '+e.message);
-        }
-    }
-
     async function runProducer(){
         try{
             updateStatus('prod-status','Generando...');
@@ -236,38 +174,58 @@ const App = (function(){
             await Synth.initAudio();
             const bpm=document.getElementById('bpm').value;
             const key=document.getElementById('key').value;
+            const scale=Scales[key];
             log('BPM: '+bpm+', Key: '+key);
 
-            let bassNotes,chordNotes,arpNotes,melodyNotes;
-            const obj=project.producerObjective;
-            if(obj&&obj.bassline){bassNotes=obj.bassline;log('Bassline IA: '+bassNotes.length+' notas')}
-            else{const root=Scales[key][0];bassNotes=[{step:3,note:root+'1',slide:true},{step:6,note:Scales[key][4]+'1'},{step:10,note:Scales[key][6]+'1',slide:true},{step:11,note:Scales[key][0]+'2',accent:true},{step:13,note:Scales[key][2]+'2'},{step:15,note:root+'0',slide:true}];log('Bassline default')}
-            if(obj&&obj.chords){chordNotes=obj.chords;log('Acordes IA: '+chordNotes.length)}
-            if(obj&&obj.arp){arpNotes=obj.arp;log('Arpegio IA: '+arpNotes.length)}
-            if(obj&&obj.melody){melodyNotes=obj.melody;log('Melodía IA: '+melodyNotes.length)}
+            const root=scale[0];
+            const bassNotes=[
+                {step:0,note:root+'1',slide:true},
+                {step:4,note:scale[4]+'1'},
+                {step:8,note:scale[6]+'1',slide:true},
+                {step:12,note:root+'2',accent:true}
+            ];
+            const chordNotes=[
+                {step:0,notes:[scale[0]+'3',scale[2]+'3',scale[4]+'3'],duration:4},
+                {step:4,notes:[scale[5]+'3',scale[0]+'4',scale[2]+'4'],duration:4},
+                {step:8,notes:[scale[3]+'3',scale[5]+'3',scale[0]+'4'],duration:4},
+                {step:12,notes:[scale[4]+'3',scale[6]+'3',scale[1]+'4'],duration:4}
+            ];
+            const arpNotes=[
+                {step:0,note:scale[0]+'4',duration:0.25},{step:1,note:scale[2]+'4',duration:0.25},
+                {step:2,note:scale[4]+'4',duration:0.25},{step:3,note:scale[2]+'4',duration:0.25},
+                {step:8,note:scale[0]+'5',duration:0.25},{step:9,note:scale[4]+'4',duration:0.25},
+                {step:10,note:scale[2]+'4',duration:0.25},{step:11,note:scale[0]+'4',duration:0.25}
+            ];
+            const melodyNotes=[
+                {step:2,note:scale[4]+'5',duration:1},{step:6,note:scale[2]+'5',duration:1},
+                {step:10,note:scale[0]+'6',duration:1.5},{step:14,note:scale[6]+'5',duration:0.5}
+            ];
 
-            const allNotes=bassNotes.concat(chordNotes||[]).concat(arpNotes||[]).concat(melodyNotes||[]);
+            const allNotes=bassNotes.concat(chordNotes).concat(arpNotes).concat(melodyNotes);
             const midiBlob=MIDI.createMidiFile(allNotes);
             const midi={name:'fxt_midi.mid',url:URL.createObjectURL(midiBlob)};
             const kickBuf=await Synth.renderKick();
-            const subBuf=await Synth.renderNotes(bassNotes,bpm,'bass');
-            const stems=[{name:'01_KICK.wav',url:URL.createObjectURL(DSP.bufferToWav(kickBuf))},{name:'02_BASS.wav',url:URL.createObjectURL(DSP.bufferToWav(subBuf))}];
-            if(chordNotes){const chordBuf=await Synth.renderNotes(chordNotes,bpm,'chord');stems.push({name:'03_CHORDS.wav',url:URL.createObjectURL(DSP.bufferToWav(chordBuf))})}
-            if(arpNotes){const arpBuf=await Synth.renderNotes(arpNotes,bpm,'arp');stems.push({name:'04_ARP.wav',url:URL.createObjectURL(DSP.bufferToWav(arpBuf))})}
-            if(melodyNotes){const leadBuf=await Synth.renderNotes(melodyNotes,bpm,'lead');stems.push({name:'05_LEAD.wav',url:URL.createObjectURL(DSP.bufferToWav(leadBuf))})}
-            project.midi=;
-            project.stems=stems;
-            renderFiles([midi].concat(project.stems));
+            const bassBuf=await Synth.renderNotes(bassNotes,bpm,'bass');
+            const chordBuf=await Synth.renderNotes(chordNotes,bpm,'chord');
+            const arpBuf=await Synth.renderNotes(arpNotes,bpm,'arp');
+            const leadBuf=await Synth.renderNotes(melodyNotes,bpm,'lead');
+            const stems=[
+                {name:'01_KICK.wav',url:URL.createObjectURL(DSP.bufferToWav(kickBuf))},
+                {name:'02_BASS.wav',url:URL.createObjectURL(DSP.bufferToWav(bassBuf))},
+                {name:'03_CHORDS.wav',url:URL.createObjectURL(DSP.bufferToWav(chordBuf))},
+                {name:'04_ARP.wav',url:URL.createObjectURL(DSP.bufferToWav(arpBuf))},
+                {name:'05_LEAD.wav',url:URL.createObjectURL(DSP.bufferToWav(leadBuf))}
+            ];
+            renderFiles([midi].concat(stems));
             updateStatus('prod-status','✓ Listo');
-            log('Producer OK: '+stems.length+' stems');
+            log('Producer OK: 5 stems + MIDI');
         }catch(e){
             log('ERROR Producer: '+e.message,true);
             updateStatus('prod-status','❌ Error');
         }
     }
 
-    document.getElementById('apikey').value=localStorage.getItem('OPENAI_KEY')||'';
-    log('4. LISTO. Escribe qué quieres y toca Generar Stems.');
+    log('3. LISTO. Elige BPM/Tonalidad y toca Generar Stems.');
 
     try{
         if(Scales['F minor'][0]==='F')log('Test 1/3: Escalas OK');else throw new Error('Escalas');
@@ -276,7 +234,7 @@ const App = (function(){
         log('Tests: 3/3 OK');
     }catch(e){log('Tests fallaron: '+e.message,true)}
 
-    return {chatProducer,runProducer};
+    return {runProducer};
 })();
 </script>
 </body>
