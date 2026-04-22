@@ -44,7 +44,6 @@
 .logo { font-weight: 900; font-size: 28px; letter-spacing: 1px; }
 .logo span { font-weight: 400; font-size: 14px; margin-left: 8px; }
 
-/* Display central mejorado */
 .note-display {
     background: #000;
     border: 2px solid #ff4500;
@@ -199,7 +198,6 @@
 .step.playing { box-shadow: 0 0 12px #ff4500; border-color: #ff4500; }
 .step.selected { border-color: #0f0; box-shadow: 0 0 8px #0f0; }
 
-/* NUEVO: Display de nota+octava en cada step */
 .step-display {
     background: #000;
     color: #0f0;
@@ -475,7 +473,6 @@ const noteFreq = {
 
 let seq = Array(16).fill().map(() => ({note: 'OFF', octave: 2, slide: false, accent: false}));
 
-// SOLO GROOVE BASSLINE TOP 10 + USER
 const FACTORY_BANKS = {
   'Groove Bassline': {
     '01: Acid Tracks 1987': [
@@ -599,7 +596,6 @@ function saveCurrentPattern() {
   document.getElementById('patternNameInput').value = '';
 }
 
-// NUEVO: Actualiza display central
 function updateNoteDisplay(step, stepNum) {
   const noteEl = document.getElementById('currentNoteDisplay');
   const octEl = document.getElementById('currentOctDisplay');
@@ -616,13 +612,11 @@ function updateNoteDisplay(step, stepNum) {
   infoEl.textContent = `STEP ${stepNum + 1}`;
 }
 
-// NUEVO: Formatea nota+octava para mostrar en step
 function formatStepDisplay(step) {
   if(step.note === 'OFF') return 'OFF';
   return step.note.replace('2', '') + step.octave;
 }
 
-// NUEVO: Actualiza el display visual de un step individual
 function updateStepDisplay(index) {
   const step = seq[index];
   const displayEl = document.getElementById(`step-display-${index}`);
@@ -674,7 +668,6 @@ async function createAcidVReverb() {
   reverbGain.connect(ctx.destination);
 }
 
-// NUEVO: Render de steps con display de nota+octava
 const stepsDiv = document.getElementById('steps');
 const ledsDiv = document.getElementById('leds');
 for(let i=0;i<16;i++){
@@ -697,7 +690,6 @@ for(let i=0;i<16;i++){
       <button class="step-btn accent-btn" data-step="${i}">A</button>
     </div>
   `;
-  // NUEVO: Click en step para preview en display central
   step.addEventListener('click', (e) => {
     if(e.target.tagName === 'SELECT' || e.target.tagName === 'BUTTON') return;
     document.querySelectorAll('.step').forEach(s => s.classList.remove('selected'));
@@ -711,14 +703,12 @@ for(let i=0;i<16;i++){
   led.className = 'led';
   ledsDiv.appendChild(led);
 }
-// NUEVO: Actualiza todos los displays cuando cambia algo
 function updateStepUI() {
   seq.forEach((s, i) => {
     updateStepDisplay(i);
   });
 }
 
-// Event listeners de knobs
 document.querySelectorAll('input[type=range]').forEach(input => {
   input.addEventListener('input', e => {
     const id = e.target.id;
@@ -745,7 +735,6 @@ document.getElementById('squareBtn').onclick = () => {
   document.getElementById('squareBtn').classList.add('active');
 };
 
-// NUEVO: Cambiar nota actualiza display del step
 document.querySelectorAll('select[data-step]').forEach(sel => {
   sel.addEventListener('change', e => {
     const i = parseInt(e.target.dataset.step);
@@ -755,7 +744,6 @@ document.querySelectorAll('select[data-step]').forEach(sel => {
   });
 });
 
-// NUEVO: Cambiar octava actualiza display
 document.querySelectorAll('.oct-down').forEach(btn => {
   btn.addEventListener('click', e => {
     e.stopPropagation();
@@ -868,7 +856,7 @@ document.getElementById('randomBtn').onclick = () => {
   const density = params.density / 100;
   const root = parseInt(document.getElementById('rootSelect').value);
   generatePattern(scale, genre, density, root);
-  updateStepUI(); // NUEVO: Actualiza displays después de random
+  updateStepUI();
 };
 
 function generatePattern(scaleName, genre, density, rootOffset) {
@@ -1111,7 +1099,6 @@ function getStepFreq(step) {
   return noteFreq[baseNote];
 }
 
-let lastFreq = 65.41;
 let reverbSend = null;
 
 function initReverb() {
@@ -1219,20 +1206,26 @@ function scheduler() {
   if(isRunning) scheduleTimer = setTimeout(scheduler, 25);
 }
 
+// MIDI ROLAND TB-303 REAL: Format 0, 1 pista, canal 0, PPQ 96
 document.getElementById('downloadMidi').onclick = () => {
   const PPQN = 96;
   const ticksPerStep = 24;
   let events = [];
 
+  // Tempo - usa params.tempo actual
   const mpqn = Math.floor(60000000 / params.tempo);
   events.push({t: 0, d: [0xFF, 0x51, 0x03, (mpqn>>16)&0xFF, (mpqn>>8)&0xFF, mpqn&0xFF]});
+
+  // Time signature 4/4
   events.push({t: 0, d: [0xFF, 0x58, 0x04, 0x04, 0x02, 0x18, 0x08]});
 
+  // Track name TB-303
   const name = 'TB-303';
   let nameBytes = [0xFF, 0x03, name.length];
   for(let i=0; i<name.length; i++) nameBytes.push(name.charCodeAt(i));
   events.push({t: 0, d: nameBytes});
 
+  // Notas del sequencer - CANAL 0 SIEMPRE
   seq.forEach((step, i) => {
     const freq = getStepFreq(step);
     if(freq) {
@@ -1241,11 +1234,14 @@ document.getElementById('downloadMidi').onclick = () => {
       const vel = step.accent? 127 : 100;
       const dur = step.slide? 23 : 20;
 
+      // Note On - Canal 0: 0x90
       events.push({t: startTick, d: [0x90, midiNote, vel]});
+      // Note Off - Canal 0: 0x80
       events.push({t: startTick + dur, d: [0x80, midiNote, 0x40]});
     }
   });
 
+  // End of track
   events.push({t: 16 * ticksPerStep, d: [0xFF, 0x2F, 0x00]});
   events.sort((a,b) => a.t - b.t);
 
@@ -1259,9 +1255,15 @@ document.getElementById('downloadMidi').onclick = () => {
     lastTick = ev.t;
   });
 
+  // HEADER MIDI: Format 0, 1 track, PPQ 96
   let midi = [];
-  midi.push(0x4D,0x54,0x68,0x64, 0x00,0x00,0x06, 0x00,0x00, 0x00,0x01, 0x00,0x60);
-  midi.push(0x4D,0x54,0x72,0x6B);
+  midi.push(0x4D,0x54,0x68,0x64); // MThd
+  midi.push(0x00,0x00,0x06); // Header length
+  midi.push(0x00,0x00); // Format 0
+  midi.push(0x00,0x01); // 1 track
+  midi.push(0x00,0x60); // PPQ 96
+  // Track chunk
+  midi.push(0x4D,0x54,0x72,0x6B); // MTrk
   midi.push((track.length>>24)&0xFF, (track.length>>16)&0xFF, (track.length>>8)&0xFF, track.length&0xFF);
   midi.push(...track);
 
