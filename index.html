@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>TB-303 v9.0 - Groove Bassline</title>
+<title>TB-303 v9.1 - Groove Bassline</title>
 <link rel="manifest" href="manifest.json">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="theme-color" content="#ff4500">
@@ -24,7 +24,7 @@
     touch-action: manipulation;
   }
 .tb303 {
-    background: linear-gradient(#c8c0, #a8a89e);
+    background: linear-gradient(#c8c8c0, #a8a89e);
     width: 100%;
     max-width: 980px;
     padding: 20px;
@@ -41,6 +41,34 @@
   }
 .logo { font-weight: 900; font-size: 28px; letter-spacing: 1px; }
 .logo span { font-weight: 400; font-size: 14px; margin-left: 8px; }
+
+/* NUEVO: Display de nota actual */
+.note-display {
+    background: #000;
+    border: 2px solid #ff4500;
+    border-radius: 4px;
+    padding: 8px 15px;
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    font-family: 'Courier New', monospace;
+  }
+.note-display .label {
+    font-size: 10px;
+    color: #ff4500;
+    text-transform: uppercase;
+  }
+.note-display .value {
+    font-size: 24px;
+    color: #0f0;
+    font-weight: 700;
+    min-width: 50px;
+    text-align: center;
+  }
+.note-display .info {
+    font-size: 11px;
+    color: #888;
+  }
 
 .controls {
     display: grid;
@@ -165,7 +193,7 @@
     gap: 3px;
   }
 .step.active { background: #ff4500; color: #111; }
-.step.playing { box-shadow: 0 0 8px #ff4500; }
+.step.playing { box-shadow: 0 0 12px #ff4500; border-color: #ff4500; }
 .step select {
     width: 100%;
     background: #000;
@@ -225,6 +253,18 @@
 <div class="tb303">
   <div class="header">
     <div class="logo">TB-303<span>Groove Bassline</span></div>
+    <!-- NUEVO: Display de nota en tiempo real -->
+    <div class="note-display">
+      <div>
+        <div class="label">NOTE</div>
+        <div class="value" id="currentNoteDisplay">---</div>
+      </div>
+      <div>
+        <div class="label">OCT</div>
+        <div class="value" id="currentOctDisplay">-</div>
+      </div>
+      <div class="info" id="stepInfo">STEP --</div>
+    </div>
     <div>
       <button id="runBtn">RUN</button>
       <button id="clearBtn">CLEAR</button>
@@ -243,7 +283,6 @@
     <button id="delPatternBtn" class="small">DEL PAT</button>
     <input id="patternNameInput" type="text" placeholder="Pattern name" style="width:100px">
   </div>
-
   <div class="controls">
     <div class="knob-group">
       <label>Tuning</label>
@@ -286,6 +325,7 @@
       <div class="value" id="reverbVal">0</div>
     </div>
   </div>
+
   <div class="switch-row">
     <div class="switch">
       <label>Wave:</label>
@@ -543,6 +583,22 @@ function saveCurrentPattern() {
   document.getElementById('patternNameInput').value = '';
 }
 
+function updateNoteDisplay(step, stepNum) {
+  const noteEl = document.getElementById('currentNoteDisplay');
+  const octEl = document.getElementById('currentOctDisplay');
+  const infoEl = document.getElementById('stepInfo');
+
+  if(step.note === 'OFF') {
+    noteEl.textContent = '---';
+    octEl.textContent = '-';
+  } else {
+    const noteName = step.note.replace(/[0-9]/g, '');
+    noteEl.textContent = noteName;
+    octEl.textContent = step.octave;
+  }
+  infoEl.textContent = `STEP ${stepNum + 1}`;
+}
+
 let reverbNode = null;
 let reverbHPF = null;
 let reverbLPF = null;
@@ -681,6 +737,7 @@ document.getElementById('clearBtn').onclick = () => {
   document.querySelectorAll('select[data-step]').forEach(sel => sel.value='OFF');
   document.querySelectorAll('.oct-indicator').forEach(ind => ind.textContent='2');
   document.querySelectorAll('.step-btn').forEach(btn => btn.classList.remove('active'));
+  updateNoteDisplay({note:'OFF',octave:2}, 0);
 };
 
 document.getElementById('runBtn').onclick = async () => {
@@ -699,6 +756,7 @@ document.getElementById('runBtn').onclick = async () => {
     clearTimeout(scheduleTimer);
     document.querySelectorAll('.led').forEach(led => led.classList.remove('on'));
     document.querySelectorAll('.step').forEach(s => s.classList.remove('playing'));
+    updateNoteDisplay({note:'OFF',octave:2}, 0);
   }
 };
 
@@ -979,6 +1037,7 @@ function generateAcidClassic(scaleNotes, density) {
     }
   }
 }
+
 function updateStepUI() {
   seq.forEach((s, i) => {
     document.querySelector(`select[data-step="${i}"]`).value = s.note;
@@ -1080,6 +1139,9 @@ function scheduler() {
   while(nextNoteTime < ctx.currentTime + 0.1) {
     const step = seq[currentStep];
 
+    // NUEVO: Actualizar display de nota en tiempo real
+    updateNoteDisplay(step, currentStep);
+
     document.querySelectorAll('.led').forEach((led,i) => {
       led.classList.toggle('on', i === currentStep);
     });
@@ -1102,20 +1164,26 @@ function scheduler() {
   if(isRunning) scheduleTimer = setTimeout(scheduler, 25);
 }
 
+// MIDI ROLAND TB-303 REAL: Format 0, PPQ 96, 1 pista, canal 0
 document.getElementById('downloadMidi').onclick = () => {
   const PPQN = 96;
   const ticksPerStep = 24;
   let events = [];
 
+  // Tempo track - 128 BPM default
   const mpqn = Math.floor(60000000 / params.tempo);
   events.push({t: 0, d: [0xFF, 0x51, 0x03, (mpqn>>16)&0xFF, (mpqn>>8)&0xFF, mpqn&0xFF]});
+
+  // Time signature 4/4
   events.push({t: 0, d: [0xFF, 0x58, 0x04, 0x04, 0x02, 0x18, 0x08]});
 
-  const name = 'TB-303 Groove Bassline';
+  // Track name TB-303
+  const name = 'TB-303';
   let nameBytes = [0xFF, 0x03, name.length];
   for(let i=0; i<name.length; i++) nameBytes.push(name.charCodeAt(i));
   events.push({t: 0, d: nameBytes});
 
+  // Notas del sequencer - Canal 0, una sola pista
   seq.forEach((step, i) => {
     const freq = getStepFreq(step);
     if(freq) {
@@ -1124,11 +1192,14 @@ document.getElementById('downloadMidi').onclick = () => {
       const vel = step.accent? 127 : 100;
       const dur = step.slide? 23 : 20;
 
+      // Note On - Canal 0
       events.push({t: startTick, d: [0x90, midiNote, vel]});
+      // Note Off - Canal 0
       events.push({t: startTick + dur, d: [0x80, midiNote, 0x40]});
     }
   });
 
+  // End of track
   events.push({t: 16 * ticksPerStep, d: [0xFF, 0x2F, 0x00]});
   events.sort((a,b) => a.t - b.t);
 
@@ -1142,28 +1213,27 @@ document.getElementById('downloadMidi').onclick = () => {
     lastTick = ev.t;
   });
 
+  // Header MIDI Format 0, 1 track, PPQ 96
   let midi = [];
-  midi.push(0x4D,0x54,0x68,0x64, 0x00,0x06, 0x00, 0x00,0x01, 0x00,0x60);
+  midi.push(0x4D,0x54,0x68,0x64, 0x00,0x00,0x00,0x06, 0x00,0x00, 0x00,0x01, 0x00,0x60);
+  // Track chunk
   midi.push(0x4D,0x54,0x72,0x6B);
   midi.push((track.length>>24)&0xFF, (track.length>>16)&0xFF, (track.length>>8)&0xFF, track.length&0xFF);
   midi.push(...track);
 
-  downloadBlob(new Uint8Array(midi), 'tb303_groove.mid', 'audio/midi');
+  downloadBlob(new Uint8Array(midi), 'tb303_roland.mid', 'audio/midi');
 };
 
 function toVLQ(value) {
   value = Math.floor(value);
   if (value === 0) return [0];
-
   let bytes = [];
   bytes.push(value & 0x7F);
   value >>= 7;
-
   while (value > 0) {
     bytes.push((value & 0x7F) | 0x80);
     value >>= 7;
   }
-
   return bytes.reverse();
 }
 
@@ -1357,6 +1427,7 @@ if('serviceWorker' in navigator) {
 
 refreshBankSelect();
 loadPattern();
+updateNoteDisplay({note:'OFF',octave:2}, 0);
 </script>
 </body>
 </html>
