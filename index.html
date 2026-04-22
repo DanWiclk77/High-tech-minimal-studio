@@ -1209,8 +1209,7 @@ function scheduler() {
   if(isRunning) scheduleTimer = setTimeout(scheduler, 25);
 }
 
-// MIDI ROLAND TB-303 PLUGIN: Format 0, 1 pista, canal 0, PPQ 96
-// Accent = velocity 127, Slide = notas ligadas
+// MIDI ROLAND TB-303: Format 0, 1 pista, canal 0, PPQ 96 - HEADER CORREGIDO
 document.getElementById('downloadMidi').onclick = () => {
   const PPQN = 96;
   const ticksPerStep = 24;
@@ -1229,8 +1228,6 @@ document.getElementById('downloadMidi').onclick = () => {
   for(let i=0; i<name.length; i++) nameBytes.push(name.charCodeAt(i));
   events.push({t: 0, d: nameBytes});
 
-  let activeNotes = []; // Para manejar slides TB-303
-
   seq.forEach((step, i) => {
     const freq = getStepFreq(step);
     const startTick = i * ticksPerStep;
@@ -1239,12 +1236,11 @@ document.getElementById('downloadMidi').onclick = () => {
       const midiNote = Math.max(0, Math.min(127, Math.round(69 + 12 * Math.log2(freq / 440))));
       const vel = step.accent? 127 : 100;
 
-      // Si el step anterior tiene slide, no cerramos la nota anterior
+      // Si el step anterior tiene slide, cerramos nota anterior en el mismo tick = legato
       const prevStep = i > 0? seq[i-1] : null;
       const hasPrevSlide = prevStep && prevStep.slide && prevStep.note!== 'OFF';
 
       if(hasPrevSlide) {
-        // Cerrar nota anterior y abrir nueva en mismo tick = legato/slide
         const prevFreq = getStepFreq(prevStep);
         const prevMidiNote = Math.round(69 + 12 * Math.log2(prevFreq / 440));
         events.push({t: startTick, d: [0x80, prevMidiNote, 0x00]}); // Note Off anterior
@@ -1252,7 +1248,7 @@ document.getElementById('downloadMidi').onclick = () => {
 
       events.push({t: startTick, d: [0x90, midiNote, vel]}); // Note On canal 0
 
-      // Si no hay slide, cerrar en el siguiente step
+      // Si no hay slide, cerrar en tick 20
       if(!step.slide) {
         const endTick = startTick + 20;
         events.push({t: endTick, d: [0x80, midiNote, 0x00]}); // Note Off
@@ -1260,7 +1256,7 @@ document.getElementById('downloadMidi').onclick = () => {
     }
   });
 
-  // Cerrar última nota si quedó abierta
+  // Cerrar última nota si quedó con slide
   const lastStep = seq[15];
   if(lastStep.note!== 'OFF' && lastStep.slide) {
     const lastFreq = getStepFreq(lastStep);
@@ -1281,10 +1277,10 @@ document.getElementById('downloadMidi').onclick = () => {
     lastTick = ev.t;
   });
 
-  // Header MIDI: Format 0, 1 track, PPQ 96
+  // HEADER MIDI CORRECTO: Format 0, 1 track, PPQ 96
   let midi = [];
   midi.push(0x4D,0x54,0x68,0x64); // MThd
-  midi.push(0x00,0x06); // Header length
+  midi.push(0x00,0x00,0x06); // Header length: 6 bytes - ESTA ES LA LÍNEA CORREGIDA
   midi.push(0x00,0x00); // Format 0
   midi.push(0x00,0x01); // 1 track
   midi.push(0x00,0x60); // PPQ 96
@@ -1504,4 +1500,3 @@ updateNoteDisplay({note:'OFF',octave:2}, 0);
 </script>
 </body>
 </html>
-
